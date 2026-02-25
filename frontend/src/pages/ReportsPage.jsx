@@ -123,8 +123,8 @@ const ReportsPage = () => {
 
     return (
         <div className="p-4 md:p-8 space-y-6 max-w-5xl mx-auto">
-            <div className="flex items-center justify-between">
-                <h1 className="font-heading text-2xl font-bold text-zinc-900">{t('Reports', 'रिपोर्ट')}</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <h1 className="font-heading text-xl sm:text-2xl font-bold text-zinc-900">{t('Reports', 'रिपोर्ट')}</h1>
                 <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleExport('collections')} data-testid="export-collections">
                         <Download className="w-4 h-4 mr-1" />{t('Collections', 'संग्रह')}
@@ -136,21 +136,21 @@ const ReportsPage = () => {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-5">
-                    <TabsTrigger value="daily" data-testid="daily-report-tab" className="font-hindi text-xs sm:text-sm">
-                        <Calendar className="w-4 h-4 mr-1 hidden sm:block" />{t('Daily', 'दैनिक')}
+                <TabsList className="w-full overflow-x-auto flex">
+                    <TabsTrigger value="daily" data-testid="daily-report-tab" className="font-hindi text-xs flex-1 min-w-0 px-2">
+                        {t('Daily', 'दैनिक')}
                     </TabsTrigger>
-                    <TabsTrigger value="farmer" data-testid="farmer-report-tab" className="font-hindi text-xs sm:text-sm">
-                        <Users className="w-4 h-4 mr-1 hidden sm:block" />{t('Farmer', 'किसान')}
+                    <TabsTrigger value="farmer" data-testid="farmer-report-tab" className="font-hindi text-xs flex-1 min-w-0 px-2">
+                        {t('Farmer', 'किसान')}
                     </TabsTrigger>
-                    <TabsTrigger value="fat" data-testid="fat-report-tab" className="font-hindi text-xs sm:text-sm">
-                        <BarChart3 className="w-4 h-4 mr-1 hidden sm:block" />{t('Fat Avg', 'फैट')}
+                    <TabsTrigger value="fat" data-testid="fat-report-tab" className="font-hindi text-xs flex-1 min-w-0 px-2">
+                        {t('Fat', 'फैट')}
                     </TabsTrigger>
-                    <TabsTrigger value="ranking" data-testid="ranking-report-tab" className="font-hindi text-xs sm:text-sm">
-                        <Trophy className="w-4 h-4 mr-1 hidden sm:block" />{t('Ranking', 'रैंकिंग')}
+                    <TabsTrigger value="ranking" data-testid="ranking-report-tab" className="font-hindi text-xs flex-1 min-w-0 px-2">
+                        {t('Rank', 'रैंक')}
                     </TabsTrigger>
-                    <TabsTrigger value="monthly" data-testid="monthly-report-tab" className="font-hindi text-xs sm:text-sm">
-                        <TrendingUp className="w-4 h-4 mr-1 hidden sm:block" />{t('Monthly', 'मासिक')}
+                    <TabsTrigger value="monthly" data-testid="monthly-report-tab" className="font-hindi text-xs flex-1 min-w-0 px-2">
+                        {t('Month', 'मासिक')}
                     </TabsTrigger>
                 </TabsList>
 
