@@ -61,6 +61,7 @@ const FarmerDetailPage = () => {
         collections: language === 'hi' ? 'दूध संग्रह' : 'Collections',
         payments: language === 'hi' ? 'भुगतान' : 'Payments',
         makePayment: language === 'hi' ? 'भुगतान करें' : 'Make Payment',
+        printBill: language === 'hi' ? 'बिल प्रिंट' : 'Print Bill',
         totalMilk: language === 'hi' ? 'कुल दूध' : 'Total Milk',
         totalDue: language === 'hi' ? 'कुल देय' : 'Total Due',
         totalPaid: language === 'hi' ? 'कुल भुगतान' : 'Total Paid',
@@ -77,6 +78,13 @@ const FarmerDetailPage = () => {
         accountNo: language === 'hi' ? 'खाता नंबर' : 'Account No',
         ifscCode: language === 'hi' ? 'IFSC कोड' : 'IFSC Code',
         aadhar: language === 'hi' ? 'आधार' : 'Aadhar',
+    };
+
+    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
+    const openBill = () => {
+        const token = localStorage.getItem('auth_token');
+        window.open(`${BACKEND_URL}/api/bills/farmer/${id}`, '_blank');
     };
 
     useEffect(() => {
