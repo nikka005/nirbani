@@ -603,8 +603,14 @@ async def create_collection(
     # Calculate SNF if not provided
     snf = collection.snf if collection.snf else calculate_snf(collection.fat)
     
-    # Get rate
-    rate = await get_milk_rate(collection.fat, snf)
+    # Use fixed rate if farmer has one, otherwise use rate chart
+    if farmer.get("fixed_rate") and farmer["fixed_rate"] > 0:
+        rate = farmer["fixed_rate"]
+    else:
+        rate = await get_milk_rate(collection.fat, snf)
+    
+    # Determine milk type: from collection, or fallback to farmer's default
+    milk_type = collection.milk_type or farmer.get("milk_type", "cow")
     
     # Calculate amount
     amount = round(collection.quantity * rate, 2)
@@ -623,6 +629,7 @@ async def create_collection(
         "snf": snf,
         "rate": rate,
         "amount": amount,
+        "milk_type": milk_type,
         "date": date_str,
         "created_at": now.isoformat()
     }
