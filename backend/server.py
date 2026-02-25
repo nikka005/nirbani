@@ -901,6 +901,156 @@ async def get_farmer_report(
         }
     }
 
+# ==================== BILL GENERATION ROUTES ====================
+
+@api_router.get("/bills/farmer/{farmer_id}", response_class=HTMLResponse)
+async def generate_farmer_bill(
+    farmer_id: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Generate HTML bill for a farmer"""
+    farmer = await db.farmers.find_one({"id": farmer_id}, {"_id": 0})
+    if not farmer:
+        raise HTTPException(status_code=404, detail="Farmer not found")
+    
+    # Default to current month if no dates
+    if not start_date:
+        today = datetime.now(timezone.utc)
+        start_date = today.replace(day=1).strftime("%Y-%m-%d")
+    if not end_date:
+        end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    # Get collections
+    collection_query = {"farmer_id": farmer_id, "date": {"$gte": start_date, "$lte": end_date}}
+    collections = await db.milk_collections.find(collection_query, {"_id": 0}).sort("date", 1).to_list(1000)
+    
+    # Get payments
+    payment_query = {"farmer_id": farmer_id, "date": {"$gte": start_date, "$lte": end_date}}
+    payments = await db.payments.find(payment_query, {"_id": 0}).sort("date", 1).to_list(1000)
+    
+    # Get settings for dairy info
+    settings = await db.settings.find_one({"type": "dairy_info"}, {"_id": 0}) or {}
+    
+    html = generate_farmer_bill_html(
+        farmer=farmer,
+        collections=collections,
+        payments=payments,
+        period_start=start_date,
+        period_end=end_date,
+        dairy_name=settings.get("dairy_name", "Nirbani Dairy"),
+        dairy_phone=settings.get("dairy_phone", ""),
+        dairy_address=settings.get("dairy_address", "")
+    )
+    
+    return HTMLResponse(content=html)
+
+@api_router.get("/bills/daily/{date}", response_class=HTMLResponse)
+async def generate_daily_bill(
+    date: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Generate HTML daily report"""
+    collections = await db.milk_collections.find({"date": date}, {"_id": 0}).to_list(1000)
+    payments = await db.payments.find({"date": date}, {"_id": 0}).to_list(1000)
+    
+    total_quantity = sum(c["quantity"] for c in collections)
+    total_amount = sum(c["amount"] for c in collections)
+    morning_qty = sum(c["quantity"] for c in collections if c["shift"] == "morning")
+    evening_qty = sum(c["quantity"] for c in collections if c["shift"] == "evening")
+    
+    summary = {
+        "total_quantity": total_quantity,
+        "total_amount": total_amount,
+        "morning_quantity": morning_qty,
+        "evening_quantity": evening_qty
+    }
+    
+    settings = await db.settings.find_one({"type": "dairy_info"}, {"_id": 0}) or {}
+    
+    html = generate_daily_report_html(
+        date=date,
+        collections=collections,
+        payments=payments,
+        summary=summary,
+        dairy_name=settings.get("dairy_name", "Nirbani Dairy")
+    )
+    
+    return HTMLResponse(content=html)
+
+# ==================== SETTINGS ROUTES ====================
+
+class DairySettings(BaseModel):
+    dairy_name: str = "Nirbani Dairy"
+    dairy_phone: str = ""
+    dairy_address: str = ""
+    sms_enabled: bool = False
+    msg91_auth_key: str = ""
+    msg91_sender_id: str = "NIRDRY"
+
+class SMSTemplateSettings(BaseModel):
+    collection_template: str = ""
+    payment_template: str = ""
+
+@api_router.get("/settings/dairy")
+async def get_dairy_settings(current_user: dict = Depends(get_current_user)):
+    settings = await db.settings.find_one({"type": "dairy_info"}, {"_id": 0})
+    if not settings:
+        return {
+            "dairy_name": "Nirbani Dairy",
+            "dairy_phone": "",
+            "dairy_address": "",
+            "sms_enabled": False
+        }
+    return settings
+
+@api_router.put("/settings/dairy")
+async def update_dairy_settings(
+    settings: DairySettings,
+    current_user: dict = Depends(get_current_user)
+):
+    await db.settings.update_one(
+        {"type": "dairy_info"},
+        {"$set": {
+            "type": "dairy_info",
+            "dairy_name": settings.dairy_name,
+            "dairy_phone": settings.dairy_phone,
+            "dairy_address": settings.dairy_address,
+            "sms_enabled": settings.sms_enabled,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    return {"message": "Settings updated successfully"}
+
+@api_router.get("/settings/sms-templates")
+async def get_sms_templates(current_user: dict = Depends(get_current_user)):
+    settings = await db.settings.find_one({"type": "sms_templates"}, {"_id": 0})
+    if not settings:
+        return {
+            "collection_template": "Nirbani Dairy: {farmer_name} जी, आपका {shift} का दूध: मात्रा: {quantity}L | फैट: {fat}% | राशि: ₹{amount}",
+            "payment_template": "Nirbani Dairy: {farmer_name} जी, ₹{amount} का भुगतान प्राप्त। बकाया: ₹{balance}"
+        }
+    return settings
+
+@api_router.put("/settings/sms-templates")
+async def update_sms_templates(
+    templates: SMSTemplateSettings,
+    current_user: dict = Depends(get_current_user)
+):
+    await db.settings.update_one(
+        {"type": "sms_templates"},
+        {"$set": {
+            "type": "sms_templates",
+            "collection_template": templates.collection_template,
+            "payment_template": templates.payment_template,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    return {"message": "SMS templates updated successfully"}
+
 # ==================== HEALTH CHECK ====================
 
 @api_router.get("/")
