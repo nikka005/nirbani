@@ -34,8 +34,10 @@ const CustomerDetailPage = () => {
     const [payments, setPayments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+    const [showEditDialog, setShowEditDialog] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [paymentForm, setPaymentForm] = useState({ amount: '', payment_mode: 'cash', notes: '' });
+    const [editForm, setEditForm] = useState({ name: '', phone: '', address: '', customer_type: 'retail', gst_number: '' });
 
     const t = (en, hi) => language === 'hi' ? hi : en;
 
