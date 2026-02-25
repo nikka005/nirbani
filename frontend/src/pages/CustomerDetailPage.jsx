@@ -17,7 +17,7 @@ import {
 } from '../components/ui/table';
 import { 
     ArrowLeft, Phone, MapPin, Wallet, ShoppingBag, FileText, Loader2, Plus, 
-    Printer, Share2, CreditCard
+    Printer, Share2, CreditCard, Edit, User, Store
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
