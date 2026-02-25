@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: nirbani-mongo
+    volumes:
+      - mongo_data:/data/db
+    restart: always
+
+  backend:
+    build: ./backend
+    container_name: nirbani-backend
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017
+      - DB_NAME=nirbani_dairy
+      - CORS_ORIGINS=https://nirbanidairy.shop
+      - JWT_SECRET=CHANGE_THIS_TO_STRONG_SECRET
+      - EMERGENT_LLM_KEY=sk-emergent-651E10b5d37729f851
+    depends_on:
+      - mongodb
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_BACKEND_URL: https://nirbanidairy.shop
+    container_name: nirbani-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  mongo_data:
