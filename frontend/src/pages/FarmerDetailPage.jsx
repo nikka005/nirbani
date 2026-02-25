@@ -88,6 +88,14 @@ const FarmerDetailPage = () => {
         window.open(`${BACKEND_URL}/api/bills/farmer/${id}`, '_blank');
     };
 
+    const openThermalBill = () => {
+        window.open(`${BACKEND_URL}/api/bills/thermal/${id}`, '_blank');
+    };
+
+    const openA4Invoice = () => {
+        window.open(`${BACKEND_URL}/api/bills/a4/${id}`, '_blank');
+    };
+
     const handleWhatsAppShare = async () => {
         const token = localStorage.getItem('auth_token');
         try {
@@ -188,7 +196,7 @@ const FarmerDetailPage = () => {
                         )}
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                     <Button
                         variant="outline"
                         onClick={handleWhatsAppShare}
@@ -200,12 +208,21 @@ const FarmerDetailPage = () => {
                     </Button>
                     <Button
                         variant="outline"
-                        onClick={openBill}
-                        data-testid="print-bill-btn"
-                        className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                        onClick={openThermalBill}
+                        data-testid="thermal-bill-btn"
+                        className="border-orange-200 text-orange-700 hover:bg-orange-50"
                     >
                         <Printer className="w-4 h-4 mr-2" />
-                        {texts.printBill}
+                        {language === 'hi' ? 'थर्मल बिल' : 'Thermal'}
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={openA4Invoice}
+                        data-testid="a4-invoice-btn"
+                        className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                    >
+                        <FileText className="w-4 h-4 mr-2" />
+                        {language === 'hi' ? 'A4 बिल' : 'A4 Invoice'}
                     </Button>
                     <Button
                         onClick={() => setShowPaymentDialog(true)}
