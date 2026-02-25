@@ -35,11 +35,15 @@ Complete Mobile + Desktop Dairy ERP Solution for Indian dairy businesses handlin
 - Auto Fat/SNF/Rate calculation
 - Duplicate entry prevention
 - Farmer balance auto-update
+- **Milk Type**: Cow / Buffalo / Mix per farmer
+- **Fixed Rate**: Per-farmer fixed rate (overrides rate chart)
 
 ### 5. Farmer Account Management ✅
 - Full CRUD with ledger view
 - Balance tracking (due, paid, pending)
 - Bank details, Aadhar, village info
+- **Milk Type** (Cow/Buffalo/Mix) with visual badges
+- **Fixed Rate** option per farmer (₹/L)
 
 ### 6. Customer Sales System ✅
 - Customer CRUD
