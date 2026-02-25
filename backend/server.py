@@ -2156,6 +2156,148 @@ async def update_sms_templates(
     )
     return {"message": "SMS templates updated successfully"}
 
+# ==================== EXPORT ROUTES ====================
+
+@api_router.get("/export/collections")
+async def export_collections(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Export collections as CSV"""
+    import io, csv
+    if not start_date:
+        start_date = datetime.now(timezone.utc).replace(day=1).strftime("%Y-%m-%d")
+    if not end_date:
+        end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    collections = await db.milk_collections.find(
+        {"date": {"$gte": start_date, "$lte": end_date}}, {"_id": 0}
+    ).sort("date", 1).to_list(10000)
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Date", "Farmer", "Shift", "Quantity(L)", "Fat%", "SNF%", "Rate", "Amount"])
+    for c in collections:
+        writer.writerow([c["date"], c["farmer_name"], c["shift"], c["quantity"], c["fat"], c["snf"], c["rate"], c["amount"]])
+    
+    content = output.getvalue()
+    return StreamingResponse(
+        io.BytesIO(content.encode("utf-8-sig")),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=collections_{start_date}_to_{end_date}.csv"}
+    )
+
+@api_router.get("/export/payments")
+async def export_payments(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Export payments as CSV"""
+    import io, csv
+    if not start_date:
+        start_date = datetime.now(timezone.utc).replace(day=1).strftime("%Y-%m-%d")
+    if not end_date:
+        end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    payments = await db.payments.find(
+        {"date": {"$gte": start_date, "$lte": end_date}}, {"_id": 0}
+    ).sort("date", 1).to_list(10000)
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Date", "Farmer", "Amount", "Mode", "Type", "Notes"])
+    for p in payments:
+        writer.writerow([p["date"], p["farmer_name"], p["amount"], p["payment_mode"], p["payment_type"], p.get("notes", "")])
+    
+    content = output.getvalue()
+    return StreamingResponse(
+        io.BytesIO(content.encode("utf-8-sig")),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=payments_{start_date}_to_{end_date}.csv"}
+    )
+
+@api_router.get("/export/farmers")
+async def export_farmers(current_user: dict = Depends(get_current_user)):
+    """Export farmers list as CSV"""
+    import io, csv
+    farmers = await db.farmers.find({}, {"_id": 0}).sort("name", 1).to_list(10000)
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Name", "Phone", "Village", "Address", "Total Milk(L)", "Total Due", "Total Paid", "Balance", "Active"])
+    for f in farmers:
+        writer.writerow([f["name"], f["phone"], f.get("village",""), f.get("address",""),
+            f["total_milk"], f["total_due"], f["total_paid"], f["balance"], f.get("is_active", True)])
+    
+    content = output.getvalue()
+    return StreamingResponse(
+        io.BytesIO(content.encode("utf-8-sig")),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=farmers_list.csv"}
+    )
+
+@api_router.get("/export/sales")
+async def export_sales(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Export sales as CSV"""
+    import io, csv
+    if not start_date:
+        start_date = datetime.now(timezone.utc).replace(day=1).strftime("%Y-%m-%d")
+    if not end_date:
+        end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    sales = await db.sales.find(
+        {"date": {"$gte": start_date, "$lte": end_date}}, {"_id": 0}
+    ).sort("date", 1).to_list(10000)
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Date", "Customer", "Product", "Quantity", "Rate", "Amount"])
+    for s in sales:
+        writer.writerow([s["date"], s["customer_name"], s["product"], s["quantity"], s["rate"], s["amount"]])
+    
+    content = output.getvalue()
+    return StreamingResponse(
+        io.BytesIO(content.encode("utf-8-sig")),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=sales_{start_date}_to_{end_date}.csv"}
+    )
+
+@api_router.get("/export/expenses")
+async def export_expenses(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Export expenses as CSV"""
+    import io, csv
+    if not start_date:
+        start_date = datetime.now(timezone.utc).replace(day=1).strftime("%Y-%m-%d")
+    if not end_date:
+        end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    expenses = await db.expenses.find(
+        {"date": {"$gte": start_date, "$lte": end_date}}, {"_id": 0}
+    ).sort("date", 1).to_list(10000)
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Date", "Category", "Amount", "Description", "Payment Mode"])
+    for e in expenses:
+        writer.writerow([e["date"], e["category"], e["amount"], e.get("description",""), e["payment_mode"]])
+    
+    content = output.getvalue()
+    return StreamingResponse(
+        io.BytesIO(content.encode("utf-8-sig")),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=expenses_{start_date}_to_{end_date}.csv"}
+    )
+
 # ==================== HEALTH CHECK ====================
 
 @api_router.get("/")
