@@ -1279,6 +1279,224 @@ async def get_farmer_report(
         }
     }
 
+# ==================== ADVANCED REPORTS ====================
+
+@api_router.get("/reports/fat-average")
+async def get_fat_average_report(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get fat average report by farmer"""
+    if not start_date:
+        today = datetime.now(timezone.utc)
+        start_date = today.replace(day=1).strftime("%Y-%m-%d")
+    if not end_date:
+        end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    collections = await db.milk_collections.find(
+        {"date": {"$gte": start_date, "$lte": end_date}}, {"_id": 0}
+    ).to_list(10000)
+    
+    # Group by farmer
+    farmer_data = {}
+    for c in collections:
+        fid = c["farmer_id"]
+        if fid not in farmer_data:
+            farmer_data[fid] = {
+                "farmer_name": c["farmer_name"],
+                "total_quantity": 0,
+                "total_fat": 0,
+                "total_snf": 0,
+                "count": 0
+            }
+        farmer_data[fid]["total_quantity"] += c["quantity"]
+        farmer_data[fid]["total_fat"] += c["fat"] * c["quantity"]
+        farmer_data[fid]["total_snf"] += c["snf"] * c["quantity"]
+        farmer_data[fid]["count"] += 1
+    
+    # Calculate weighted averages
+    report = []
+    for fid, data in farmer_data.items():
+        if data["total_quantity"] > 0:
+            avg_fat = data["total_fat"] / data["total_quantity"]
+            avg_snf = data["total_snf"] / data["total_quantity"]
+        else:
+            avg_fat = 0
+            avg_snf = 0
+        
+        report.append({
+            "farmer_id": fid,
+            "farmer_name": data["farmer_name"],
+            "total_quantity": round(data["total_quantity"], 2),
+            "avg_fat": round(avg_fat, 2),
+            "avg_snf": round(avg_snf, 2),
+            "entries": data["count"]
+        })
+    
+    # Sort by average fat descending
+    report.sort(key=lambda x: x["avg_fat"], reverse=True)
+    
+    return {
+        "period": {"start": start_date, "end": end_date},
+        "report": report
+    }
+
+@api_router.get("/reports/farmer-ranking")
+async def get_farmer_ranking_report(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    sort_by: str = "quantity",  # quantity, amount, fat
+    current_user: dict = Depends(get_current_user)
+):
+    """Get farmer ranking report"""
+    if not start_date:
+        today = datetime.now(timezone.utc)
+        start_date = today.replace(day=1).strftime("%Y-%m-%d")
+    if not end_date:
+        end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    collections = await db.milk_collections.find(
+        {"date": {"$gte": start_date, "$lte": end_date}}, {"_id": 0}
+    ).to_list(10000)
+    
+    # Group by farmer
+    farmer_data = {}
+    for c in collections:
+        fid = c["farmer_id"]
+        if fid not in farmer_data:
+            farmer_data[fid] = {
+                "farmer_name": c["farmer_name"],
+                "total_quantity": 0,
+                "total_amount": 0,
+                "total_fat_weighted": 0,
+                "count": 0
+            }
+        farmer_data[fid]["total_quantity"] += c["quantity"]
+        farmer_data[fid]["total_amount"] += c["amount"]
+        farmer_data[fid]["total_fat_weighted"] += c["fat"] * c["quantity"]
+        farmer_data[fid]["count"] += 1
+    
+    # Build ranking list
+    ranking = []
+    for fid, data in farmer_data.items():
+        avg_fat = data["total_fat_weighted"] / data["total_quantity"] if data["total_quantity"] > 0 else 0
+        ranking.append({
+            "farmer_id": fid,
+            "farmer_name": data["farmer_name"],
+            "total_quantity": round(data["total_quantity"], 2),
+            "total_amount": round(data["total_amount"], 2),
+            "avg_fat": round(avg_fat, 2),
+            "entries": data["count"]
+        })
+    
+    # Sort based on criteria
+    if sort_by == "quantity":
+        ranking.sort(key=lambda x: x["total_quantity"], reverse=True)
+    elif sort_by == "amount":
+        ranking.sort(key=lambda x: x["total_amount"], reverse=True)
+    elif sort_by == "fat":
+        ranking.sort(key=lambda x: x["avg_fat"], reverse=True)
+    
+    # Add rank
+    for i, r in enumerate(ranking):
+        r["rank"] = i + 1
+    
+    return {
+        "period": {"start": start_date, "end": end_date},
+        "sort_by": sort_by,
+        "ranking": ranking
+    }
+
+@api_router.get("/reports/monthly-summary")
+async def get_monthly_summary_report(
+    month: Optional[str] = None,  # Format: YYYY-MM
+    current_user: dict = Depends(get_current_user)
+):
+    """Get monthly business summary"""
+    if not month:
+        month = datetime.now(timezone.utc).strftime("%Y-%m")
+    
+    year, mon = month.split("-")
+    start_date = f"{month}-01"
+    
+    # Calculate end date (last day of month)
+    if int(mon) == 12:
+        end_date = f"{int(year)+1}-01-01"
+    else:
+        end_date = f"{year}-{int(mon)+1:02d}-01"
+    
+    # Get all data for the month
+    collections = await db.milk_collections.find(
+        {"date": {"$gte": start_date, "$lt": end_date}}, {"_id": 0}
+    ).to_list(10000)
+    
+    payments = await db.payments.find(
+        {"date": {"$gte": start_date, "$lt": end_date}}, {"_id": 0}
+    ).to_list(10000)
+    
+    sales = await db.sales.find(
+        {"date": {"$gte": start_date, "$lt": end_date}}, {"_id": 0}
+    ).to_list(10000)
+    
+    expenses = await db.expenses.find(
+        {"date": {"$gte": start_date, "$lt": end_date}}, {"_id": 0}
+    ).to_list(10000)
+    
+    # Calculate totals
+    total_milk = sum(c["quantity"] for c in collections)
+    total_milk_amount = sum(c["amount"] for c in collections)
+    total_payments = sum(p["amount"] for p in payments)
+    total_sales = sum(s["amount"] for s in sales)
+    total_expenses = sum(e["amount"] for e in expenses)
+    
+    # Unique farmers
+    unique_farmers = len(set(c["farmer_id"] for c in collections))
+    
+    # Average fat
+    if collections:
+        avg_fat = sum(c["fat"] * c["quantity"] for c in collections) / total_milk if total_milk > 0 else 0
+    else:
+        avg_fat = 0
+    
+    # Daily breakdown
+    daily_data = {}
+    for c in collections:
+        if c["date"] not in daily_data:
+            daily_data[c["date"]] = {"quantity": 0, "amount": 0}
+        daily_data[c["date"]]["quantity"] += c["quantity"]
+        daily_data[c["date"]]["amount"] += c["amount"]
+    
+    return {
+        "month": month,
+        "collection": {
+            "total_milk": round(total_milk, 2),
+            "total_amount": round(total_milk_amount, 2),
+            "unique_farmers": unique_farmers,
+            "avg_fat": round(avg_fat, 2),
+            "entries": len(collections)
+        },
+        "payments": {
+            "total": round(total_payments, 2),
+            "count": len(payments)
+        },
+        "sales": {
+            "total": round(total_sales, 2),
+            "count": len(sales)
+        },
+        "expenses": {
+            "total": round(total_expenses, 2),
+            "count": len(expenses)
+        },
+        "profit": {
+            "gross": round(total_sales - total_milk_amount, 2),
+            "net": round(total_sales - total_milk_amount - total_expenses, 2)
+        },
+        "daily_breakdown": [
+            {"date": d, **v} for d, v in sorted(daily_data.items())
+        ]
+    }
+
 # ==================== BILL GENERATION ROUTES ====================
 
 @api_router.get("/bills/farmer/{farmer_id}", response_class=HTMLResponse)
