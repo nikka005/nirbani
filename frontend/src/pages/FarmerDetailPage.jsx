@@ -553,6 +553,88 @@ const FarmerDetailPage = () => {
                     </form>
                 </DialogContent>
             </Dialog>
+
+            {/* Edit Farmer Dialog */}
+            <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+                <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="font-heading flex items-center gap-2">
+                            <Edit className="w-5 h-5 text-emerald-600" />
+                            {texts.editFarmer}
+                        </DialogTitle>
+                        <DialogDescription className="text-sm text-muted-foreground">
+                            {language === 'hi' ? 'किसान की जानकारी अपडेट करें' : 'Update farmer details'}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleEdit} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>{texts.nameLabel} *</Label>
+                            <Input value={editData.name} onChange={(e) => setEditData(p => ({...p, name: e.target.value}))}
+                                data-testid="edit-farmer-name" className="h-12" required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>{texts.phoneLabel} *</Label>
+                            <Input type="tel" value={editData.phone} onChange={(e) => setEditData(p => ({...p, phone: e.target.value}))}
+                                data-testid="edit-farmer-phone" className="h-12" required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>{texts.village}</Label>
+                            <Input value={editData.village} onChange={(e) => setEditData(p => ({...p, village: e.target.value}))}
+                                data-testid="edit-farmer-village" className="h-12" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>{texts.addressLabel}</Label>
+                            <Input value={editData.address} onChange={(e) => setEditData(p => ({...p, address: e.target.value}))}
+                                data-testid="edit-farmer-address" className="h-12" />
+                        </div>
+                        <div className="border-t pt-4">
+                            <p className="text-sm font-semibold text-zinc-700 mb-3 flex items-center gap-2">
+                                <Milk className="w-4 h-4 text-emerald-600" /> {texts.milkType}
+                            </p>
+                            <div className="grid grid-cols-3 gap-2 mb-4">
+                                {[{value:'cow',en:'Cow',hi:'गाय'},{value:'buffalo',en:'Buffalo',hi:'भैंस'},{value:'mix',en:'Mix',hi:'मिक्स'}].map(mt => (
+                                    <button key={mt.value} type="button"
+                                        onClick={() => setEditData(p => ({...p, milk_type: mt.value}))}
+                                        data-testid={`edit-milk-type-${mt.value}`}
+                                        className={cn("py-3 px-4 rounded-xl border-2 text-sm font-semibold transition-all",
+                                            editData.milk_type === mt.value ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-zinc-200 text-zinc-600 hover:border-zinc-300"
+                                        )}>{language === 'hi' ? mt.hi : mt.en}</button>
+                                ))}
+                            </div>
+                            <div className="space-y-2">
+                                <Label>{texts.fixedRate}</Label>
+                                <Input type="number" step="0.5" value={editData.fixed_rate}
+                                    onChange={(e) => setEditData(p => ({...p, fixed_rate: e.target.value}))}
+                                    data-testid="edit-farmer-fixed-rate" className="h-12" />
+                            </div>
+                        </div>
+                        <div className="border-t pt-4">
+                            <p className="text-sm font-semibold text-zinc-700 mb-3">{texts.bankDetails}</p>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label>{texts.accountNo}</Label>
+                                    <Input value={editData.bank_account} onChange={(e) => setEditData(p => ({...p, bank_account: e.target.value}))}
+                                        data-testid="edit-farmer-bank" className="h-12" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>{texts.ifscCode}</Label>
+                                    <Input value={editData.ifsc_code} onChange={(e) => setEditData(p => ({...p, ifsc_code: e.target.value.toUpperCase()}))}
+                                        data-testid="edit-farmer-ifsc" className="h-12" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>{texts.aadhar}</Label>
+                                    <Input value={editData.aadhar_number} onChange={(e) => setEditData(p => ({...p, aadhar_number: e.target.value}))}
+                                        data-testid="edit-farmer-aadhar" className="h-12" />
+                                </div>
+                            </div>
+                        </div>
+                        <Button type="submit" data-testid="submit-edit-farmer"
+                            className="w-full h-12 bg-emerald-700 hover:bg-emerald-800 font-hindi text-base" disabled={submitting}>
+                            {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : texts.save}
+                        </Button>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
