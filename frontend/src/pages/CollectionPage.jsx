@@ -140,10 +140,12 @@ const CollectionPage = () => {
         }
     };
 
-    const filteredFarmers = farmers.filter(f => 
-        f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        f.phone.includes(searchTerm)
-    );
+    const filteredFarmers = searchTerm.length > 0 
+        ? farmers.filter(f => 
+            f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            f.phone.includes(searchTerm)
+        )
+        : farmers.slice(0, 10);
 
     const selectFarmer = (farmer) => {
         setSelectedFarmer(farmer);
@@ -328,7 +330,7 @@ const CollectionPage = () => {
                                         data-testid="farmer-search"
                                         className="pl-10 h-12"
                                     />
-                                    {searchTerm && filteredFarmers.length > 0 && (
+                                    {filteredFarmers.length > 0 && (
                                         <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-auto z-50">
                                             {filteredFarmers.map(farmer => (
                                                 <button
