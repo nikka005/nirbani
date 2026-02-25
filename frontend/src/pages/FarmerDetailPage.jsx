@@ -49,7 +49,14 @@ const FarmerDetailPage = () => {
     const [ledger, setLedger] = useState({ collections: [], payments: [] });
     const [loading, setLoading] = useState(true);
     const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+    const [showEditDialog, setShowEditDialog] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+
+    const [editData, setEditData] = useState({
+        name: '', phone: '', village: '', address: '',
+        bank_account: '', ifsc_code: '', aadhar_number: '',
+        milk_type: 'cow', fixed_rate: '',
+    });
 
     const [paymentData, setPaymentData] = useState({
         amount: '',
