@@ -19,6 +19,7 @@ import InventoryPage from './pages/InventoryPage';
 import ExpensesPage from './pages/ExpensesPage';
 import BranchesPage from './pages/BranchesPage';
 import BulkUploadPage from './pages/BulkUploadPage';
+import CustomerDetailPage from './pages/CustomerDetailPage';
 
 // Layout
 import MainLayout from './components/layout/MainLayout';
@@ -65,6 +66,7 @@ const AppRoutes = () => {
                 <Route path="reports" element={<ReportsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="sales" element={<SalesPage />} />
+                <Route path="customers/:id" element={<CustomerDetailPage />} />
                 <Route path="inventory" element={<InventoryPage />} />
                 <Route path="expenses" element={<ExpensesPage />} />
                 <Route path="branches" element={<BranchesPage />} />
