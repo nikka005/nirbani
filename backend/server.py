@@ -844,6 +844,273 @@ async def delete_payment(payment_id: str, current_user: dict = Depends(get_curre
     await db.payments.delete_one({"id": payment_id})
     return {"message": "Payment deleted successfully"}
 
+# ==================== CUSTOMER ROUTES ====================
+
+@api_router.post("/customers", response_model=CustomerResponse)
+async def create_customer(customer: CustomerCreate, current_user: dict = Depends(get_current_user)):
+    customer_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    customer_doc = {
+        "id": customer_id,
+        "name": customer.name,
+        "phone": customer.phone,
+        "address": customer.address or "",
+        "customer_type": customer.customer_type,
+        "gst_number": customer.gst_number or "",
+        "total_purchase": 0.0,
+        "total_paid": 0.0,
+        "balance": 0.0,
+        "created_at": now,
+        "is_active": True
+    }
+    
+    await db.customers.insert_one(customer_doc)
+    return CustomerResponse(**customer_doc)
+
+@api_router.get("/customers", response_model=List[CustomerResponse])
+async def get_customers(
+    search: Optional[str] = None,
+    customer_type: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if search:
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"phone": {"$regex": search, "$options": "i"}}
+        ]
+    if customer_type:
+        query["customer_type"] = customer_type
+    
+    customers = await db.customers.find(query, {"_id": 0}).sort("name", 1).to_list(1000)
+    return [CustomerResponse(**c) for c in customers]
+
+@api_router.get("/customers/{customer_id}", response_model=CustomerResponse)
+async def get_customer(customer_id: str, current_user: dict = Depends(get_current_user)):
+    customer = await db.customers.find_one({"id": customer_id}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    return CustomerResponse(**customer)
+
+# ==================== SALES ROUTES ====================
+
+@api_router.post("/sales", response_model=SaleResponse)
+async def create_sale(sale: SaleCreate, current_user: dict = Depends(get_current_user)):
+    customer = await db.customers.find_one({"id": sale.customer_id}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    sale_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+    date_str = now.strftime("%Y-%m-%d")
+    amount = round(sale.quantity * sale.rate, 2)
+    
+    sale_doc = {
+        "id": sale_id,
+        "customer_id": sale.customer_id,
+        "customer_name": customer["name"],
+        "product": sale.product,
+        "quantity": sale.quantity,
+        "rate": sale.rate,
+        "amount": amount,
+        "notes": sale.notes or "",
+        "date": date_str,
+        "created_at": now.isoformat()
+    }
+    
+    await db.sales.insert_one(sale_doc)
+    
+    # Update customer totals
+    await db.customers.update_one(
+        {"id": sale.customer_id},
+        {"$inc": {"total_purchase": amount, "balance": amount}}
+    )
+    
+    # Update product stock if exists
+    await db.products.update_one(
+        {"name": sale.product},
+        {"$inc": {"stock": -sale.quantity}}
+    )
+    
+    return SaleResponse(**sale_doc)
+
+@api_router.get("/sales", response_model=List[SaleResponse])
+async def get_sales(
+    date: Optional[str] = None,
+    customer_id: Optional[str] = None,
+    product: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if date:
+        query["date"] = date
+    if customer_id:
+        query["customer_id"] = customer_id
+    if product:
+        query["product"] = product
+    
+    sales = await db.sales.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return [SaleResponse(**s) for s in sales]
+
+@api_router.get("/sales/today")
+async def get_today_sales(current_user: dict = Depends(get_current_user)):
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    sales = await db.sales.find({"date": today}, {"_id": 0}).to_list(1000)
+    
+    total_amount = sum(s["amount"] for s in sales)
+    by_product = {}
+    for s in sales:
+        if s["product"] not in by_product:
+            by_product[s["product"]] = {"quantity": 0, "amount": 0}
+        by_product[s["product"]]["quantity"] += s["quantity"]
+        by_product[s["product"]]["amount"] += s["amount"]
+    
+    return {
+        "date": today,
+        "total_sales": len(sales),
+        "total_amount": round(total_amount, 2),
+        "by_product": by_product,
+        "sales": sales
+    }
+
+# ==================== INVENTORY/PRODUCT ROUTES ====================
+
+@api_router.post("/products", response_model=ProductResponse)
+async def create_product(product: ProductCreate, current_user: dict = Depends(get_current_user)):
+    product_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    product_doc = {
+        "id": product_id,
+        "name": product.name,
+        "unit": product.unit,
+        "stock": product.stock,
+        "min_stock": product.min_stock,
+        "rate": product.rate,
+        "updated_at": now
+    }
+    
+    await db.products.insert_one(product_doc)
+    return ProductResponse(**product_doc)
+
+@api_router.get("/products", response_model=List[ProductResponse])
+async def get_products(current_user: dict = Depends(get_current_user)):
+    products = await db.products.find({}, {"_id": 0}).to_list(100)
+    return [ProductResponse(**p) for p in products]
+
+@api_router.get("/products/low-stock")
+async def get_low_stock_products(current_user: dict = Depends(get_current_user)):
+    products = await db.products.find({}, {"_id": 0}).to_list(100)
+    low_stock = [p for p in products if p["stock"] <= p["min_stock"]]
+    return low_stock
+
+@api_router.post("/products/stock-update")
+async def update_stock(update: StockUpdate, current_user: dict = Depends(get_current_user)):
+    product = await db.products.find_one({"id": update.product_id}, {"_id": 0})
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    quantity_change = update.quantity if update.type == "in" else -update.quantity
+    now = datetime.now(timezone.utc).isoformat()
+    
+    await db.products.update_one(
+        {"id": update.product_id},
+        {"$inc": {"stock": quantity_change}, "$set": {"updated_at": now}}
+    )
+    
+    # Log stock movement
+    await db.stock_movements.insert_one({
+        "id": str(uuid.uuid4()),
+        "product_id": update.product_id,
+        "product_name": product["name"],
+        "quantity": update.quantity,
+        "type": update.type,
+        "notes": update.notes or "",
+        "created_at": now
+    })
+    
+    return {"message": "Stock updated successfully"}
+
+# ==================== EXPENSE ROUTES ====================
+
+@api_router.post("/expenses", response_model=ExpenseResponse)
+async def create_expense(expense: ExpenseCreate, current_user: dict = Depends(get_current_user)):
+    expense_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+    date_str = now.strftime("%Y-%m-%d")
+    
+    expense_doc = {
+        "id": expense_id,
+        "category": expense.category,
+        "amount": expense.amount,
+        "description": expense.description or "",
+        "payment_mode": expense.payment_mode,
+        "date": date_str,
+        "created_at": now.isoformat()
+    }
+    
+    await db.expenses.insert_one(expense_doc)
+    return ExpenseResponse(**expense_doc)
+
+@api_router.get("/expenses", response_model=List[ExpenseResponse])
+async def get_expenses(
+    date: Optional[str] = None,
+    category: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if date:
+        query["date"] = date
+    if category:
+        query["category"] = category
+    if start_date and end_date:
+        query["date"] = {"$gte": start_date, "$lte": end_date}
+    
+    expenses = await db.expenses.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return [ExpenseResponse(**e) for e in expenses]
+
+@api_router.get("/expenses/summary")
+async def get_expense_summary(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    if not start_date:
+        today = datetime.now(timezone.utc)
+        start_date = today.replace(day=1).strftime("%Y-%m-%d")
+    if not end_date:
+        end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    expenses = await db.expenses.find(
+        {"date": {"$gte": start_date, "$lte": end_date}}, {"_id": 0}
+    ).to_list(1000)
+    
+    by_category = {}
+    total = 0
+    for e in expenses:
+        cat = e["category"]
+        if cat not in by_category:
+            by_category[cat] = 0
+        by_category[cat] += e["amount"]
+        total += e["amount"]
+    
+    return {
+        "period": {"start": start_date, "end": end_date},
+        "total": round(total, 2),
+        "by_category": by_category,
+        "count": len(expenses)
+    }
+
+@api_router.delete("/expenses/{expense_id}")
+async def delete_expense(expense_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.expenses.delete_one({"id": expense_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Expense not found")
+    return {"message": "Expense deleted successfully"}
+
 # ==================== DASHBOARD ROUTES ====================
 
 @api_router.get("/dashboard/stats", response_model=DashboardStats)
