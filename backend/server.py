@@ -764,6 +764,7 @@ async def create_payment(
         "farmer_name": farmer["name"],
         "amount": payment.amount,
         "payment_mode": payment.payment_mode,
+        "payment_type": payment.payment_type,
         "notes": payment.notes or "",
         "date": date_str,
         "created_at": now.isoformat()
@@ -771,13 +772,24 @@ async def create_payment(
     
     await db.payments.insert_one(payment_doc)
     
-    # Update farmer totals
-    await db.farmers.update_one(
-        {"id": payment.farmer_id},
-        {
-            "$inc": {
-                "total_paid": payment.amount,
-                "balance": -payment.amount
+    # Update farmer totals based on payment type
+    if payment.payment_type == "advance":
+        # Advance increases balance (farmer owes us)
+        await db.farmers.update_one(
+            {"id": payment.farmer_id},
+            {"$inc": {"total_paid": payment.amount, "balance": payment.amount}}
+        )
+    elif payment.payment_type == "deduction":
+        # Deduction reduces from due amount
+        await db.farmers.update_one(
+            {"id": payment.farmer_id},
+            {"$inc": {"total_due": -payment.amount, "balance": -payment.amount}}
+        )
+    else:
+        # Normal payment
+        await db.farmers.update_one(
+            {"id": payment.farmer_id},
+            {"$inc": {"total_paid": payment.amount, "balance": -payment.amount}}
             }
         }
     )
