@@ -200,9 +200,26 @@ const FarmersPage = () => {
                                     {getInitials(farmer.name)}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="font-semibold text-zinc-900 truncate">
-                                        {farmer.name}
-                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <p className="font-semibold text-zinc-900 truncate">
+                                            {farmer.name}
+                                        </p>
+                                        <span className={cn(
+                                            "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide",
+                                            farmer.milk_type === 'buffalo' ? "bg-amber-100 text-amber-700" :
+                                            farmer.milk_type === 'mix' ? "bg-purple-100 text-purple-700" :
+                                            "bg-blue-100 text-blue-700"
+                                        )}>
+                                            {farmer.milk_type === 'buffalo' ? (language === 'hi' ? 'भैंस' : 'Buffalo') :
+                                             farmer.milk_type === 'mix' ? (language === 'hi' ? 'मिक्स' : 'Mix') :
+                                             (language === 'hi' ? 'गाय' : 'Cow')}
+                                        </span>
+                                        {farmer.fixed_rate && (
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                                                ₹{farmer.fixed_rate}/L
+                                            </span>
+                                        )}
+                                    </div>
                                     <div className="flex items-center gap-3 text-sm text-zinc-500">
                                         <span className="flex items-center gap-1">
                                             <Phone className="w-3 h-3" />
