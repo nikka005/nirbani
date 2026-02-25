@@ -180,9 +180,26 @@ const FarmerDetailPage = () => {
                     <ArrowLeft className="w-5 h-5" />
                 </Button>
                 <div className="flex-1">
-                    <h1 className="font-heading text-2xl font-bold text-zinc-900">
-                        {farmer.name}
-                    </h1>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <h1 className="font-heading text-2xl font-bold text-zinc-900">
+                            {farmer.name}
+                        </h1>
+                        <span className={cn(
+                            "px-2 py-0.5 rounded-full text-xs font-bold uppercase",
+                            farmer.milk_type === 'buffalo' ? "bg-amber-100 text-amber-700" :
+                            farmer.milk_type === 'mix' ? "bg-purple-100 text-purple-700" :
+                            "bg-blue-100 text-blue-700"
+                        )}>
+                            {farmer.milk_type === 'buffalo' ? (language === 'hi' ? 'भैंस' : 'Buffalo') :
+                             farmer.milk_type === 'mix' ? (language === 'hi' ? 'मिक्स' : 'Mix') :
+                             (language === 'hi' ? 'गाय' : 'Cow')}
+                        </span>
+                        {farmer.fixed_rate && (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700" data-testid="fixed-rate-badge">
+                                {language === 'hi' ? 'निश्चित दर' : 'Fixed'}: ₹{farmer.fixed_rate}/L
+                            </span>
+                        )}
+                    </div>
                     <div className="flex items-center gap-3 text-sm text-zinc-500">
                         <span className="flex items-center gap-1">
                             <Phone className="w-3 h-3" />
