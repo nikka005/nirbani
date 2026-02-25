@@ -1,0 +1,135 @@
+{
+  "brand_identity": {
+    "name": "Nirbani Dairy",
+    "core_values": ["Trust", "Freshness", "Simplicity", "Technology"],
+    "emotional_tone": "Clean, Organic, Professional, Accessible",
+    "theme_mode": "light",
+    "archetype": "Organic & Earthy Tech"
+  },
+  "typography": {
+    "font_family": {
+      "heading": "Manrope, sans-serif",
+      "body": "Inter, sans-serif",
+      "hindi": "Mukta, sans-serif"
+    },
+    "scale": {
+      "h1": "text-4xl md:text-5xl font-bold tracking-tight",
+      "h2": "text-3xl font-bold tracking-tight",
+      "h3": "text-2xl font-semibold",
+      "body_lg": "text-lg leading-relaxed",
+      "body_base": "text-base leading-relaxed",
+      "caption": "text-sm text-muted-foreground",
+      "bilingual_label": "text-lg font-medium"
+    }
+  },
+  "colors": {
+    "primary": {
+      "DEFAULT": "#047857",
+      "foreground": "#ffffff",
+      "description": "Emerald 700 - Deep Trusted Green"
+    },
+    "secondary": {
+      "DEFAULT": "#84cc16",
+      "foreground": "#0f172a",
+      "description": "Lime 500 - Fresh Growth Green"
+    },
+    "accent": {
+      "DEFAULT": "#ecfccb",
+      "foreground": "#1a2e05",
+      "description": "Lime 100 - Highlight/Backgrounds"
+    },
+    "background": {
+      "app": "#fafafa",
+      "card": "#ffffff",
+      "surface": "#f4f4f5"
+    },
+    "status": {
+      "success": "#22c55e",
+      "warning": "#f59e0b",
+      "error": "#ef4444",
+      "info": "#0ea5e9"
+    }
+  },
+  "layout_strategy": {
+    "type": "Mobile-First Dashboard",
+    "grid_system": "Bento Grid (Mode B - High Density)",
+    "spacing": "Tailwind Scale (p-4 mobile, p-8 desktop)",
+    "container": "max-w-md mx-auto md:max-w-5xl",
+    "navigation": {
+      "mobile": "Bottom Fixed Navigation Bar",
+      "desktop": "Sidebar or Top Horizontal"
+    }
+  },
+  "component_rules": {
+    "cards": {
+      "style": "bg-white rounded-xl border border-zinc-200 shadow-sm",
+      "hover": "hover:shadow-md hover:border-emerald-200 transition-all duration-200",
+      "padding": "p-5"
+    },
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-emerald-800 rounded-lg h-12 text-base font-semibold shadow-sm active:scale-95 transition-transform",
+      "secondary": "bg-white border border-input hover:bg-zinc-50 text-zinc-900 rounded-lg h-12",
+      "large_action": "h-24 flex flex-col items-center justify-center gap-2 text-lg border-2 border-transparent hover:border-emerald-500 hover:bg-emerald-50"
+    },
+    "inputs": {
+      "style": "h-12 text-lg bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 rounded-lg",
+      "label": "text-sm font-medium text-zinc-600 mb-1.5 block"
+    }
+  },
+  "visual_enhancers": {
+    "gradients": "Subtle top-down fade for hero sections (Emerald-50 to Transparent)",
+    "shadows": "Soft diffuse shadows: shadow-[0_2px_8px_rgba(0,0,0,0.08)]",
+    "borders": "1px solid zinc-200 for structure, Emerald-500 for active states",
+    "radius": "rounded-xl for cards, rounded-lg for inputs/buttons"
+  },
+  "accessibility": {
+    "contrast": "Ensure 4.5:1 ratio for all text. Use Emerald-800 for text on light backgrounds.",
+    "touch_targets": "Minimum 44px for all interactive elements.",
+    "focus_states": "Visible Emerald-500 ring on focus.",
+    "bilingual": "English and Hindi text should be visually distinct (e.g., Hindi slightly larger or bolder if needed)."
+  },
+  "image_assets": {
+    "hero_login": {
+      "url": "https://images.pexels.com/photos/27829919/pexels-photo-27829919.jpeg",
+      "alt": "Young cow grazing in lush green field",
+      "usage": "Login page background or Hero banner"
+    },
+    "milk_collection": {
+      "url": "https://images.pexels.com/photos/8064113/pexels-photo-8064113.jpeg",
+      "alt": "Farmer milking cow into clay pot",
+      "usage": "Collection module header or empty state"
+    },
+    "freshness_splash": {
+      "url": "https://images.pexels.com/photos/17517634/pexels-photo-17517634.jpeg",
+      "alt": "Fresh milk splash",
+      "usage": "Marketing accents or loading screen"
+    },
+    "logo_placeholder": "Use a vector cow head icon or milk drop icon in Emerald-700"
+  },
+  "3d_libraries": {
+    "usage": "Minimal. Use simple CSS animations or Framer Motion for transitions. No heavy 3D for this rural app context to ensure performance on low-end devices."
+  },
+  "instructions_to_main_agent": [
+    "Prioritize Mobile Experience: 80% of users will use this on phones.",
+    "Bilingual First: Every major label must show Hindi text. Use 'English (Hindi)' format.",
+    "Offline Friendly UI: Design clear 'Syncing' or 'Offline' indicators.",
+    "Data Density: In the 'Ledger' and 'Collection' tables, keep rows compact but readable.",
+    "Input Focus: When entering milk data, the number pad should be easily accessible.",
+    "Use 'sonner' for all toast notifications.",
+    "Use 'recharts' or Shadcn charts for the milk collection graphs.",
+    "Install 'lucide-react' for icons."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy",
+    "Use glass-morphism effects with backdrop filters (12-24px blur) only for overlays/modals.",
+    "You MUST NOT apply universal transition. Eg: transition: all.",
+    "You MUST NOT center align the app container, ie do not add .App { text-align: center; }.",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations.",
+    "NEVER use AI assistant Emoji characters like 🤖 etc.",
+    "Every interaction needs micro-animations - hover states, transitions.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "All interactive and key informational elements MUST include a data-testid attribute."
+  ]
+}
