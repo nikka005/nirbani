@@ -283,6 +283,45 @@ const FarmersPage = () => {
                             />
                         </div>
 
+                        {/* Milk Type & Fixed Rate */}
+                        <div className="border-t pt-4 mt-4">
+                            <p className="text-sm font-semibold text-zinc-700 mb-3 flex items-center gap-2">
+                                <Milk className="w-4 h-4 text-emerald-600" />
+                                {texts.milkType}
+                            </p>
+                            <div className="grid grid-cols-3 gap-2 mb-4">
+                                {MILK_TYPES.map((mt) => (
+                                    <button
+                                        key={mt.value}
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, milk_type: mt.value }))}
+                                        data-testid={`milk-type-${mt.value}`}
+                                        className={cn(
+                                            "py-3 px-4 rounded-xl border-2 text-sm font-semibold transition-all",
+                                            formData.milk_type === mt.value
+                                                ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                                : "border-zinc-200 text-zinc-600 hover:border-zinc-300"
+                                        )}
+                                    >
+                                        {language === 'hi' ? mt.labelHi : mt.labelEn}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="font-hindi">{texts.fixedRate}</Label>
+                                <Input
+                                    type="number"
+                                    step="0.5"
+                                    value={formData.fixed_rate}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, fixed_rate: e.target.value }))}
+                                    data-testid="farmer-fixed-rate-input"
+                                    placeholder={language === 'hi' ? 'उदा: 35' : 'e.g. 35'}
+                                    className="h-12"
+                                />
+                                <p className="text-xs text-zinc-500">{texts.fixedRateHint}</p>
+                            </div>
+                        </div>
+
                         <div className="space-y-2">
                             <Label className="font-hindi">{texts.address}</Label>
                             <Input
