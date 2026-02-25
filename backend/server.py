@@ -961,6 +961,23 @@ async def get_customer(customer_id: str, current_user: dict = Depends(get_curren
         raise HTTPException(status_code=404, detail="Customer not found")
     return CustomerResponse(**customer)
 
+@api_router.put("/customers/{customer_id}", response_model=CustomerResponse)
+async def update_customer(
+    customer_id: str,
+    updates: CustomerUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    customer = await db.customers.find_one({"id": customer_id}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    update_data = {k: v for k, v in updates.model_dump().items() if v is not None}
+    if update_data:
+        await db.customers.update_one({"id": customer_id}, {"$set": update_data})
+    updated = await db.customers.find_one({"id": customer_id}, {"_id": 0})
+    return CustomerResponse(**updated)
+
+
+
 # ==================== SALES ROUTES ====================
 
 @api_router.post("/sales", response_model=SaleResponse)
