@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, getInitials } from '../lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -39,6 +40,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const SalesPage = () => {
     const { language } = useAuth();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('sales');
     const [customers, setCustomers] = useState([]);
     const [sales, setSales] = useState([]);
@@ -278,7 +280,9 @@ const SalesPage = () => {
                     </div>
                     <div className="space-y-3">
                         {filteredCustomers.map((customer) => (
-                            <Card key={customer.id} className="card-hover">
+                            <Card key={customer.id} className="card-hover cursor-pointer" 
+                                onClick={() => navigate(`/customers/${customer.id}`)}
+                                data-testid={`customer-${customer.id}`}>
                                 <CardContent className="p-4 flex items-center gap-4">
                                     <div className="farmer-avatar">{getInitials(customer.name)}</div>
                                     <div className="flex-1">
@@ -300,6 +304,7 @@ const SalesPage = () => {
                                         )}>{formatCurrency(customer.balance)}</p>
                                         <p className="text-xs text-zinc-500">{texts.balance}</p>
                                     </div>
+                                    <ChevronRight className="w-5 h-5 text-zinc-400" />
                                 </CardContent>
                             </Card>
                         ))}
