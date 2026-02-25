@@ -448,20 +448,39 @@ const CollectionPage = () => {
                                 onChange={(e) => setFormData(p => ({...p, quantity: e.target.value}))}
                                 data-testid="quantity-input" placeholder="0.0" className="h-12 text-lg" />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label className="font-hindi">{t('Fat %', 'फैट %')}</Label>
-                                <Input type="number" step="0.1" value={formData.fat}
-                                    onChange={(e) => setFormData(p => ({...p, fat: e.target.value, snf: ''}))}
-                                    data-testid="fat-input" placeholder="0.0" className="h-12 text-lg" />
+
+                        {hasFixedRate ? (
+                            <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200" data-testid="fixed-rate-info">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-semibold text-emerald-700">{t('Fixed Rate Applied', 'निश्चित दर लागू')}</p>
+                                        <p className="text-xs text-emerald-600 mt-0.5">{t('Fat/SNF not needed for fixed rate farmers', 'निश्चित दर किसानों के लिए फैट/एसएनएफ की जरूरत नहीं')}</p>
+                                    </div>
+                                    <p className="text-2xl font-bold text-emerald-700">₹{selectedFarmer.fixed_rate}<span className="text-sm font-normal">/L</span></p>
+                                </div>
+                                {formData.quantity && (
+                                    <div className="mt-2 pt-2 border-t border-emerald-200 flex justify-between">
+                                        <span className="text-sm text-emerald-600">{t('Estimated Amount', 'अनुमानित राशि')}:</span>
+                                        <span className="font-bold text-emerald-700">₹{(parseFloat(formData.quantity || 0) * selectedFarmer.fixed_rate).toFixed(2)}</span>
+                                    </div>
+                                )}
                             </div>
-                            <div className="space-y-2">
-                                <Label className="font-hindi">{t('SNF %', 'एसएनएफ %')}</Label>
-                                <Input type="number" step="0.1" value={formData.snf}
-                                    onChange={(e) => setFormData(p => ({...p, snf: e.target.value}))}
-                                    data-testid="snf-input" placeholder="Auto" className="h-12 text-lg bg-zinc-50" />
+                        ) : (
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="font-hindi">{t('Fat %', 'फैट %')}</Label>
+                                    <Input type="number" step="0.1" value={formData.fat}
+                                        onChange={(e) => setFormData(p => ({...p, fat: e.target.value, snf: ''}))}
+                                        data-testid="fat-input" placeholder="0.0" className="h-12 text-lg" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="font-hindi">{t('SNF %', 'एसएनएफ %')}</Label>
+                                    <Input type="number" step="0.1" value={formData.snf}
+                                        onChange={(e) => setFormData(p => ({...p, snf: e.target.value}))}
+                                        data-testid="snf-input" placeholder="Auto" className="h-12 text-lg bg-zinc-50" />
+                                </div>
                             </div>
-                        </div>
+                        )}
                         <Button type="submit" data-testid="submit-collection"
                             className="w-full h-12 bg-emerald-700 hover:bg-emerald-800 font-hindi text-base"
                             disabled={submitting || !formData.farmer_id}>
