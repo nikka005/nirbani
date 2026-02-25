@@ -22,10 +22,17 @@ import {
     MapPin,
     ChevronRight,
     Loader2,
-    Wallet
+    Wallet,
+    Milk
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
+
+const MILK_TYPES = [
+    { value: 'cow', labelEn: 'Cow', labelHi: 'गाय' },
+    { value: 'buffalo', labelEn: 'Buffalo', labelHi: 'भैंस' },
+    { value: 'mix', labelEn: 'Mix', labelHi: 'मिक्स' },
+];
 
 const FarmersPage = () => {
     const { language } = useAuth();
@@ -45,6 +52,8 @@ const FarmersPage = () => {
         bank_account: '',
         ifsc_code: '',
         aadhar_number: '',
+        milk_type: 'cow',
+        fixed_rate: '',
     });
 
     const texts = {
@@ -63,6 +72,9 @@ const FarmersPage = () => {
         noFarmers: language === 'hi' ? 'कोई किसान नहीं मिला' : 'No farmers found',
         totalFarmers: language === 'hi' ? 'कुल किसान' : 'Total Farmers',
         success: language === 'hi' ? 'किसान जोड़ा गया!' : 'Farmer added!',
+        milkType: language === 'hi' ? 'दूध का प्रकार' : 'Milk Type',
+        fixedRate: language === 'hi' ? 'निश्चित दर (₹/L)' : 'Fixed Rate (₹/L)',
+        fixedRateHint: language === 'hi' ? 'खाली छोड़ें तो चार्ट से दर लगेगी' : 'Leave empty to use rate chart',
     };
 
     useEffect(() => {
@@ -96,7 +108,11 @@ const FarmersPage = () => {
 
         setSubmitting(true);
         try {
-            const response = await farmerAPI.create(formData);
+            const payload = {
+                ...formData,
+                fixed_rate: formData.fixed_rate ? parseFloat(formData.fixed_rate) : null,
+            };
+            const response = await farmerAPI.create(payload);
             setFarmers(prev => [response.data, ...prev]);
             setFormData({
                 name: '',
@@ -106,6 +122,8 @@ const FarmersPage = () => {
                 bank_account: '',
                 ifsc_code: '',
                 aadhar_number: '',
+                milk_type: 'cow',
+                fixed_rate: '',
             });
             setShowAddDialog(false);
             toast.success(texts.success);
