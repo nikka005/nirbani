@@ -2209,7 +2209,7 @@ async def export_payments(
     writer = csv.writer(output)
     writer.writerow(["Date", "Farmer", "Amount", "Mode", "Type", "Notes"])
     for p in payments:
-        writer.writerow([p["date"], p["farmer_name"], p["amount"], p["payment_mode"], p["payment_type"], p.get("notes", "")])
+        writer.writerow([p["date"], p["farmer_name"], p["amount"], p["payment_mode"], p.get("payment_type", "payment"), p.get("notes", "")])
     
     content = output.getvalue()
     return StreamingResponse(
