@@ -34,7 +34,8 @@ import {
     Loader2,
     Plus,
     Edit,
-    Trash2
+    Trash2,
+    Printer
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
