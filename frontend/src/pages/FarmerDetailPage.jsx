@@ -35,7 +35,8 @@ import {
     Plus,
     Edit,
     Trash2,
-    Printer
+    Printer,
+    Share2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
@@ -85,6 +86,19 @@ const FarmerDetailPage = () => {
     const openBill = () => {
         const token = localStorage.getItem('auth_token');
         window.open(`${BACKEND_URL}/api/bills/farmer/${id}`, '_blank');
+    };
+
+    const handleWhatsAppShare = async () => {
+        const token = localStorage.getItem('auth_token');
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/share/farmer-bill/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await response.json();
+            window.open(data.whatsapp_link, '_blank');
+        } catch (error) {
+            toast.error(language === 'hi' ? 'WhatsApp शेयर विफल' : 'WhatsApp share failed');
+        }
     };
 
     useEffect(() => {
@@ -175,6 +189,15 @@ const FarmerDetailPage = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={handleWhatsAppShare}
+                        data-testid="whatsapp-share-btn"
+                        className="border-green-200 text-green-700 hover:bg-green-50"
+                    >
+                        <Share2 className="w-4 h-4 mr-2" />
+                        WhatsApp
+                    </Button>
                     <Button
                         variant="outline"
                         onClick={openBill}
