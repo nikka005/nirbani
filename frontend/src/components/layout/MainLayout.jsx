@@ -9,7 +9,8 @@ import {
     FileText,
     LogOut,
     Languages,
-    ChartLine
+    ChartLine,
+    Settings
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
