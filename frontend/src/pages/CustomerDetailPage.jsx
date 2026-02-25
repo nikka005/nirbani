@@ -171,6 +171,10 @@ const CustomerDetailPage = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
+                    <Button variant="outline" onClick={openEditDialog} data-testid="edit-customer-btn"
+                        className="border-zinc-200 text-zinc-700 hover:bg-zinc-50">
+                        <Edit className="w-4 h-4 mr-2" />{t('Edit', 'संपादन')}
+                    </Button>
                     <Button variant="outline" onClick={handleWhatsAppShare} data-testid="customer-whatsapp-btn"
                         className="border-green-200 text-green-700 hover:bg-green-50">
                         <Share2 className="w-4 h-4 mr-2" />WhatsApp
