@@ -82,6 +82,41 @@ const CustomerDetailPage = () => {
         }
     };
 
+    const openEditDialog = () => {
+        if (customer) {
+            setEditForm({
+                name: customer.name || '',
+                phone: customer.phone || '',
+                address: customer.address || '',
+                customer_type: customer.customer_type || 'retail',
+                gst_number: customer.gst_number || '',
+            });
+            setShowEditDialog(true);
+        }
+    };
+
+    const handleEdit = async (e) => {
+        e.preventDefault();
+        if (!editForm.name || !editForm.phone) {
+            toast.error(t('Name and phone required', 'नाम और फ़ोन आवश्यक है'));
+            return;
+        }
+        setSubmitting(true);
+        const token = localStorage.getItem('auth_token');
+        try {
+            await axios.put(`${BACKEND_URL}/api/customers/${id}`, editForm, {
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+            });
+            toast.success(t('Customer updated!', 'ग्राहक अपडेट हुआ!'));
+            setShowEditDialog(false);
+            fetchData();
+        } catch (error) {
+            toast.error(t('Update failed', 'अपडेट विफल'));
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     const openThermalBill = () => window.open(`${BACKEND_URL}/api/bills/customer/thermal/${id}`, '_blank');
     const openA4Invoice = () => window.open(`${BACKEND_URL}/api/bills/customer/a4/${id}`, '_blank');
 
