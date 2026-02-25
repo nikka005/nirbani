@@ -10,7 +10,10 @@ import {
     LogOut,
     Languages,
     ChartLine,
-    Settings
+    Settings,
+    ShoppingBag,
+    Package,
+    Receipt
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
