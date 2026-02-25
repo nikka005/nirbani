@@ -160,6 +160,7 @@ class PaymentCreate(BaseModel):
     farmer_id: str
     amount: float
     payment_mode: str  # cash, upi, bank
+    payment_type: str = "payment"  # payment, advance, deduction
     notes: Optional[str] = ""
 
 class PaymentResponse(BaseModel):
@@ -169,7 +170,91 @@ class PaymentResponse(BaseModel):
     farmer_name: str
     amount: float
     payment_mode: str
+    payment_type: str
     notes: str
+    date: str
+    created_at: str
+
+# Customer Models
+class CustomerCreate(BaseModel):
+    name: str
+    phone: str
+    address: Optional[str] = ""
+    customer_type: str = "retail"  # retail, wholesale
+    gst_number: Optional[str] = ""
+
+class CustomerResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    name: str
+    phone: str
+    address: str
+    customer_type: str
+    gst_number: str
+    total_purchase: float
+    total_paid: float
+    balance: float
+    created_at: str
+    is_active: bool
+
+# Sale Models
+class SaleCreate(BaseModel):
+    customer_id: str
+    product: str  # milk, paneer, dahi, ghee, lassi
+    quantity: float
+    rate: float
+    notes: Optional[str] = ""
+
+class SaleResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    customer_id: str
+    customer_name: str
+    product: str
+    quantity: float
+    rate: float
+    amount: float
+    date: str
+    created_at: str
+
+# Product/Inventory Models
+class ProductCreate(BaseModel):
+    name: str
+    unit: str  # kg, liter, piece
+    stock: float = 0
+    min_stock: float = 0
+    rate: float = 0
+
+class ProductResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    name: str
+    unit: str
+    stock: float
+    min_stock: float
+    rate: float
+    updated_at: str
+
+class StockUpdate(BaseModel):
+    product_id: str
+    quantity: float
+    type: str  # in, out
+    notes: Optional[str] = ""
+
+# Expense Models
+class ExpenseCreate(BaseModel):
+    category: str  # salary, transport, electricity, maintenance, other
+    amount: float
+    description: Optional[str] = ""
+    payment_mode: str = "cash"
+
+class ExpenseResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    category: str
+    amount: float
+    description: str
+    payment_mode: str
     date: str
     created_at: str
 
