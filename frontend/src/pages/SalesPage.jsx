@@ -30,7 +30,8 @@ import {
     Loader2,
     Phone,
     Store,
-    User
+    User,
+    ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
