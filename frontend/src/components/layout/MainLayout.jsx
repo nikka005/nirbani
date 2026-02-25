@@ -111,6 +111,21 @@ const MainLayout = () => {
                         <ChartLine className={cn("w-5 h-5", location.pathname === '/rate-chart' && "text-emerald-600")} />
                         <span className="font-hindi">{language === 'hi' ? 'दर चार्ट' : 'Rate Chart'}</span>
                     </NavLink>
+                    
+                    {/* Settings Link */}
+                    <NavLink
+                        to="/settings"
+                        data-testid="nav-settings"
+                        className={cn(
+                            "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+                            location.pathname === '/settings'
+                                ? "bg-emerald-50 text-emerald-700 font-semibold" 
+                                : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
+                        )}
+                    >
+                        <Settings className={cn("w-5 h-5", location.pathname === '/settings' && "text-emerald-600")} />
+                        <span className="font-hindi">{language === 'hi' ? 'सेटिंग्स' : 'Settings'}</span>
+                    </NavLink>
                 </nav>
 
                 {/* Language Toggle */}
