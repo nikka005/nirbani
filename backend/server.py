@@ -1154,6 +1154,360 @@ async def delete_expense(expense_id: str, current_user: dict = Depends(get_curre
         raise HTTPException(status_code=404, detail="Expense not found")
     return {"message": "Expense deleted successfully"}
 
+# ==================== BRANCH MANAGEMENT ROUTES ====================
+
+@api_router.post("/branches", response_model=BranchResponse)
+async def create_branch(branch: BranchCreate, current_user: dict = Depends(get_current_user)):
+    # Check if branch code already exists
+    existing = await db.branches.find_one({"code": branch.code}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="Branch code already exists")
+    
+    branch_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    branch_doc = {
+        "id": branch_id,
+        "name": branch.name,
+        "code": branch.code.upper(),
+        "address": branch.address or "",
+        "phone": branch.phone or "",
+        "manager_name": branch.manager_name or "",
+        "is_active": True,
+        "created_at": now
+    }
+    
+    await db.branches.insert_one(branch_doc)
+    return BranchResponse(**branch_doc)
+
+@api_router.get("/branches", response_model=List[BranchResponse])
+async def get_branches(current_user: dict = Depends(get_current_user)):
+    branches = await db.branches.find({}, {"_id": 0}).sort("name", 1).to_list(100)
+    return [BranchResponse(**b) for b in branches]
+
+@api_router.get("/branches/{branch_id}", response_model=BranchResponse)
+async def get_branch(branch_id: str, current_user: dict = Depends(get_current_user)):
+    branch = await db.branches.find_one({"id": branch_id}, {"_id": 0})
+    if not branch:
+        raise HTTPException(status_code=404, detail="Branch not found")
+    return BranchResponse(**branch)
+
+@api_router.put("/branches/{branch_id}", response_model=BranchResponse)
+async def update_branch(branch_id: str, branch: BranchCreate, current_user: dict = Depends(get_current_user)):
+    existing = await db.branches.find_one({"id": branch_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Branch not found")
+    
+    await db.branches.update_one(
+        {"id": branch_id},
+        {"$set": {
+            "name": branch.name,
+            "code": branch.code.upper(),
+            "address": branch.address or "",
+            "phone": branch.phone or "",
+            "manager_name": branch.manager_name or ""
+        }}
+    )
+    
+    updated = await db.branches.find_one({"id": branch_id}, {"_id": 0})
+    return BranchResponse(**updated)
+
+@api_router.delete("/branches/{branch_id}")
+async def delete_branch(branch_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.branches.delete_one({"id": branch_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Branch not found")
+    return {"message": "Branch deleted successfully"}
+
+@api_router.get("/branches/{branch_id}/stats")
+async def get_branch_stats(branch_id: str, current_user: dict = Depends(get_current_user)):
+    """Get statistics for a specific branch"""
+    branch = await db.branches.find_one({"id": branch_id}, {"_id": 0})
+    if not branch:
+        raise HTTPException(status_code=404, detail="Branch not found")
+    
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    # Get branch collections
+    collections = await db.milk_collections.find(
+        {"branch_id": branch_id, "date": today}, {"_id": 0}
+    ).to_list(1000)
+    
+    # Get branch farmers
+    farmers_count = await db.farmers.count_documents({"branch_id": branch_id})
+    
+    total_quantity = sum(c["quantity"] for c in collections)
+    total_amount = sum(c["amount"] for c in collections)
+    
+    return {
+        "branch": branch,
+        "today": {
+            "collections": len(collections),
+            "quantity": round(total_quantity, 2),
+            "amount": round(total_amount, 2)
+        },
+        "total_farmers": farmers_count
+    }
+
+# ==================== BULK UPLOAD ROUTES ====================
+
+@api_router.post("/bulk/collections")
+async def bulk_upload_collections(
+    upload: BulkCollectionUpload,
+    current_user: dict = Depends(get_current_user)
+):
+    """Bulk upload milk collections from CSV/Excel data"""
+    results = {
+        "success": 0,
+        "failed": 0,
+        "errors": []
+    }
+    
+    for entry in upload.entries:
+        try:
+            # Find farmer by phone
+            farmer = await db.farmers.find_one({"phone": entry.farmer_phone}, {"_id": 0})
+            if not farmer:
+                results["failed"] += 1
+                results["errors"].append(f"Farmer not found: {entry.farmer_phone}")
+                continue
+            
+            # Check for duplicate
+            today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            existing = await db.milk_collections.find_one({
+                "farmer_id": farmer["id"],
+                "date": today,
+                "shift": entry.shift
+            }, {"_id": 0})
+            
+            if existing:
+                results["failed"] += 1
+                results["errors"].append(f"Duplicate entry for {farmer['name']} ({entry.shift})")
+                continue
+            
+            # Calculate SNF and rate
+            snf = entry.snf if entry.snf else calculate_snf(entry.fat)
+            rate = await get_milk_rate(entry.fat, snf)
+            amount = round(entry.quantity * rate, 2)
+            
+            collection_id = str(uuid.uuid4())
+            now = datetime.now(timezone.utc)
+            
+            collection_doc = {
+                "id": collection_id,
+                "farmer_id": farmer["id"],
+                "farmer_name": farmer["name"],
+                "shift": entry.shift,
+                "quantity": entry.quantity,
+                "fat": entry.fat,
+                "snf": snf,
+                "rate": rate,
+                "amount": amount,
+                "date": today,
+                "branch_id": upload.branch_id or "",
+                "created_at": now.isoformat()
+            }
+            
+            await db.milk_collections.insert_one(collection_doc)
+            
+            # Update farmer totals
+            await db.farmers.update_one(
+                {"id": farmer["id"]},
+                {"$inc": {"total_milk": entry.quantity, "total_due": amount, "balance": amount}}
+            )
+            
+            results["success"] += 1
+            
+        except Exception as e:
+            results["failed"] += 1
+            results["errors"].append(f"Error processing {entry.farmer_phone}: {str(e)}")
+    
+    return results
+
+@api_router.post("/bulk/farmers")
+async def bulk_upload_farmers(
+    farmers_data: List[FarmerCreate],
+    current_user: dict = Depends(get_current_user)
+):
+    """Bulk upload farmers from CSV/Excel data"""
+    results = {
+        "success": 0,
+        "failed": 0,
+        "errors": []
+    }
+    
+    for farmer_data in farmers_data:
+        try:
+            # Check if phone already exists
+            existing = await db.farmers.find_one({"phone": farmer_data.phone}, {"_id": 0})
+            if existing:
+                results["failed"] += 1
+                results["errors"].append(f"Phone already exists: {farmer_data.phone}")
+                continue
+            
+            farmer_id = str(uuid.uuid4())
+            now = datetime.now(timezone.utc).isoformat()
+            
+            farmer_doc = {
+                "id": farmer_id,
+                "name": farmer_data.name,
+                "phone": farmer_data.phone,
+                "address": farmer_data.address or "",
+                "village": farmer_data.village or "",
+                "bank_account": farmer_data.bank_account or "",
+                "ifsc_code": farmer_data.ifsc_code or "",
+                "aadhar_number": farmer_data.aadhar_number or "",
+                "total_milk": 0.0,
+                "total_due": 0.0,
+                "total_paid": 0.0,
+                "balance": 0.0,
+                "created_at": now,
+                "is_active": True
+            }
+            
+            await db.farmers.insert_one(farmer_doc)
+            results["success"] += 1
+            
+        except Exception as e:
+            results["failed"] += 1
+            results["errors"].append(f"Error adding {farmer_data.name}: {str(e)}")
+    
+    return results
+
+@api_router.get("/bulk/template/collections")
+async def get_collection_template():
+    """Get CSV template for bulk collection upload"""
+    template = "farmer_phone,shift,quantity,fat,snf\n"
+    template += "9876543210,morning,5.5,4.2,8.5\n"
+    template += "9876543211,evening,6.0,4.5,8.7\n"
+    return {"template": template, "columns": ["farmer_phone", "shift", "quantity", "fat", "snf"]}
+
+@api_router.get("/bulk/template/farmers")
+async def get_farmer_template():
+    """Get CSV template for bulk farmer upload"""
+    template = "name,phone,village,address,bank_account,ifsc_code,aadhar_number\n"
+    template += "रामलाल,9876543210,गोकुलपुर,मुख्य बाजार,1234567890,SBIN0001234,123456789012\n"
+    return {"template": template, "columns": ["name", "phone", "village", "address", "bank_account", "ifsc_code", "aadhar_number"]}
+
+# ==================== WHATSAPP SHARING ROUTES ====================
+
+@api_router.get("/share/farmer-bill/{farmer_id}")
+async def get_farmer_bill_share_link(
+    farmer_id: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Generate WhatsApp share link for farmer bill"""
+    farmer = await db.farmers.find_one({"id": farmer_id}, {"_id": 0})
+    if not farmer:
+        raise HTTPException(status_code=404, detail="Farmer not found")
+    
+    # Default to current month
+    if not start_date:
+        today = datetime.now(timezone.utc)
+        start_date = today.replace(day=1).strftime("%Y-%m-%d")
+    if not end_date:
+        end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    # Get collections and calculate totals
+    collections = await db.milk_collections.find(
+        {"farmer_id": farmer_id, "date": {"$gte": start_date, "$lte": end_date}}, {"_id": 0}
+    ).to_list(1000)
+    
+    payments = await db.payments.find(
+        {"farmer_id": farmer_id, "date": {"$gte": start_date, "$lte": end_date}}, {"_id": 0}
+    ).to_list(1000)
+    
+    total_milk = sum(c["quantity"] for c in collections)
+    total_amount = sum(c["amount"] for c in collections)
+    total_paid = sum(p["amount"] for p in payments)
+    balance = total_amount - total_paid
+    
+    # Generate WhatsApp message
+    message = f"""🥛 *Nirbani Dairy - किसान बिल*
+
+*{farmer['name']}*
+📞 {farmer['phone']}
+
+📅 अवधि: {start_date} से {end_date}
+
+📊 *विवरण:*
+• कुल दूध: {total_milk:.1f} लीटर
+• कुल राशि: ₹{total_amount:.2f}
+• भुगतान: ₹{total_paid:.2f}
+• *बकाया: ₹{balance:.2f}*
+
+धन्यवाद! 🙏"""
+
+    # URL encode the message
+    import urllib.parse
+    encoded_message = urllib.parse.quote(message)
+    whatsapp_link = f"https://wa.me/{farmer['phone']}?text={encoded_message}"
+    
+    return {
+        "farmer": farmer["name"],
+        "phone": farmer["phone"],
+        "message": message,
+        "whatsapp_link": whatsapp_link,
+        "summary": {
+            "total_milk": round(total_milk, 2),
+            "total_amount": round(total_amount, 2),
+            "total_paid": round(total_paid, 2),
+            "balance": round(balance, 2)
+        }
+    }
+
+@api_router.get("/share/daily-report/{date}")
+async def get_daily_report_share(
+    date: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Generate WhatsApp share link for daily report"""
+    collections = await db.milk_collections.find({"date": date}, {"_id": 0}).to_list(1000)
+    
+    total_quantity = sum(c["quantity"] for c in collections)
+    total_amount = sum(c["amount"] for c in collections)
+    morning_qty = sum(c["quantity"] for c in collections if c["shift"] == "morning")
+    evening_qty = sum(c["quantity"] for c in collections if c["shift"] == "evening")
+    unique_farmers = len(set(c["farmer_id"] for c in collections))
+    
+    if collections:
+        avg_fat = sum(c["fat"] for c in collections) / len(collections)
+    else:
+        avg_fat = 0
+    
+    message = f"""🥛 *Nirbani Dairy - दैनिक रिपोर्ट*
+
+📅 तारीख: {date}
+
+📊 *संग्रह विवरण:*
+• कुल दूध: {total_quantity:.1f} लीटर
+• सुबह: {morning_qty:.1f} L | शाम: {evening_qty:.1f} L
+• औसत फैट: {avg_fat:.1f}%
+• कुल राशि: ₹{total_amount:.2f}
+
+👥 किसान: {unique_farmers}
+📝 प्रविष्टियाँ: {len(collections)}"""
+
+    import urllib.parse
+    encoded_message = urllib.parse.quote(message)
+    
+    return {
+        "date": date,
+        "message": message,
+        "whatsapp_link": f"https://wa.me/?text={encoded_message}",
+        "summary": {
+            "total_quantity": round(total_quantity, 2),
+            "total_amount": round(total_amount, 2),
+            "morning_quantity": round(morning_qty, 2),
+            "evening_quantity": round(evening_qty, 2),
+            "avg_fat": round(avg_fat, 2),
+            "farmers": unique_farmers,
+            "entries": len(collections)
+        }
+    }
+
 # ==================== DASHBOARD ROUTES ====================
 
 @api_router.get("/dashboard/stats", response_model=DashboardStats)
