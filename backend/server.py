@@ -126,6 +126,7 @@ class MilkCollectionCreate(BaseModel):
     quantity: float  # in liters
     fat: float  # fat percentage
     snf: Optional[float] = None  # SNF percentage
+    milk_type: Optional[str] = None  # cow, buffalo, mix (auto from farmer if not set)
 
 class MilkCollectionResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -138,6 +139,7 @@ class MilkCollectionResponse(BaseModel):
     snf: float
     rate: float
     amount: float
+    milk_type: str = "cow"
     date: str
     created_at: str
 
