@@ -697,6 +697,19 @@ async def create_payment(
         }
     )
     
+    # Calculate new balance and send SMS
+    new_balance = farmer["balance"] - payment.amount
+    try:
+        send_payment_sms(
+            farmer_name=farmer["name"],
+            farmer_phone=farmer["phone"],
+            amount=payment.amount,
+            payment_mode=payment.payment_mode,
+            new_balance=new_balance
+        )
+    except Exception as e:
+        logger.warning(f"Failed to send payment SMS: {e}")
+    
     return PaymentResponse(**payment_doc)
 
 @api_router.get("/payments", response_model=List[PaymentResponse])
