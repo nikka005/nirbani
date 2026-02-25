@@ -258,6 +258,37 @@ class ExpenseResponse(BaseModel):
     date: str
     created_at: str
 
+# Branch Models
+class BranchCreate(BaseModel):
+    name: str
+    code: str
+    address: Optional[str] = ""
+    phone: Optional[str] = ""
+    manager_name: Optional[str] = ""
+
+class BranchResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    name: str
+    code: str
+    address: str
+    phone: str
+    manager_name: str
+    is_active: bool
+    created_at: str
+
+# Bulk Upload Models
+class BulkCollectionEntry(BaseModel):
+    farmer_phone: str
+    shift: str
+    quantity: float
+    fat: float
+    snf: Optional[float] = None
+
+class BulkCollectionUpload(BaseModel):
+    entries: List[BulkCollectionEntry]
+    branch_id: Optional[str] = None
+
 # Dashboard Models
 class DashboardStats(BaseModel):
     total_farmers: int
