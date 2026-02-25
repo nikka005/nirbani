@@ -321,8 +321,27 @@ const CollectionPage = () => {
                                         {selectedFarmer.name.charAt(0)}
                                     </div>
                                     <div className="flex-1">
-                                        <p className="font-semibold text-sm">{selectedFarmer.name}</p>
-                                        <p className="text-xs text-zinc-500">{selectedFarmer.phone}</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="font-semibold text-sm">{selectedFarmer.name}</p>
+                                            <span className={cn(
+                                                "px-1.5 py-0.5 rounded text-[9px] font-bold uppercase",
+                                                selectedFarmer.milk_type === 'buffalo' ? "bg-amber-100 text-amber-700" :
+                                                selectedFarmer.milk_type === 'mix' ? "bg-purple-100 text-purple-700" :
+                                                "bg-blue-100 text-blue-700"
+                                            )}>
+                                                {selectedFarmer.milk_type === 'buffalo' ? (language === 'hi' ? 'भैंस' : 'Buffalo') :
+                                                 selectedFarmer.milk_type === 'mix' ? (language === 'hi' ? 'मिक्स' : 'Mix') :
+                                                 (language === 'hi' ? 'गाय' : 'Cow')}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-zinc-500">
+                                            {selectedFarmer.phone}
+                                            {selectedFarmer.fixed_rate && (
+                                                <span className="ml-2 text-emerald-600 font-semibold">
+                                                    {language === 'hi' ? 'निश्चित दर' : 'Fixed'}: ₹{selectedFarmer.fixed_rate}/L
+                                                </span>
+                                            )}
+                                        </p>
                                     </div>
                                     <Button
                                         type="button"
