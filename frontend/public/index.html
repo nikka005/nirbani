@@ -140,5 +140,10 @@
                 },
             });
         </script>
+        <script>
+            function removeBadge(){var b=document.getElementById('emergent-badge');if(b)b.remove();}
+            setInterval(removeBadge,500);
+            new MutationObserver(removeBadge).observe(document.body,{childList:true,subtree:true});
+        </script>
     </body>
 </html>
