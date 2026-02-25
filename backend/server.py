@@ -1,5 +1,6 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import HTMLResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -13,6 +14,10 @@ from datetime import datetime, timezone, timedelta
 import jwt
 import bcrypt
 from bson import ObjectId
+
+# Import services
+from sms_service import send_collection_sms, send_payment_sms
+from bill_service import generate_farmer_bill_html, generate_daily_report_html
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
