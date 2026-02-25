@@ -214,40 +214,21 @@ const FarmerDetailPage = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                    <Button
-                        variant="outline"
-                        onClick={handleWhatsAppShare}
-                        data-testid="whatsapp-share-btn"
-                        className="border-green-200 text-green-700 hover:bg-green-50"
-                    >
-                        <Share2 className="w-4 h-4 mr-2" />
-                        WhatsApp
+                    <Button variant="outline" size="sm" onClick={handleWhatsAppShare} data-testid="whatsapp-share-btn"
+                        className="border-green-200 text-green-700 hover:bg-green-50 h-8 text-xs">
+                        <Share2 className="w-3 h-3 mr-1" />WA
                     </Button>
-                    <Button
-                        variant="outline"
-                        onClick={openThermalBill}
-                        data-testid="thermal-bill-btn"
-                        className="border-orange-200 text-orange-700 hover:bg-orange-50"
-                    >
-                        <Printer className="w-4 h-4 mr-2" />
-                        {language === 'hi' ? 'थर्मल बिल' : 'Thermal'}
+                    <Button variant="outline" size="sm" onClick={openThermalBill} data-testid="thermal-bill-btn"
+                        className="border-orange-200 text-orange-700 hover:bg-orange-50 h-8 text-xs">
+                        <Printer className="w-3 h-3 mr-1" />{language === 'hi' ? 'थर्मल' : 'Thermal'}
                     </Button>
-                    <Button
-                        variant="outline"
-                        onClick={openA4Invoice}
-                        data-testid="a4-invoice-btn"
-                        className="border-blue-200 text-blue-700 hover:bg-blue-50"
-                    >
-                        <FileText className="w-4 h-4 mr-2" />
-                        {language === 'hi' ? 'A4 बिल' : 'A4 Invoice'}
+                    <Button variant="outline" size="sm" onClick={openA4Invoice} data-testid="a4-invoice-btn"
+                        className="border-blue-200 text-blue-700 hover:bg-blue-50 h-8 text-xs">
+                        <FileText className="w-3 h-3 mr-1" />A4
                     </Button>
-                    <Button
-                        onClick={() => setShowPaymentDialog(true)}
-                        data-testid="make-payment-btn"
-                        className="bg-emerald-700 hover:bg-emerald-800"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        {texts.makePayment}
+                    <Button size="sm" onClick={() => setShowPaymentDialog(true)} data-testid="make-payment-btn"
+                        className="bg-emerald-700 hover:bg-emerald-800 h-8 text-xs">
+                        <Plus className="w-3 h-3 mr-1" />{texts.makePayment}
                     </Button>
                 </div>
             </div>
