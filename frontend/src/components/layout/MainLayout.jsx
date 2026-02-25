@@ -112,6 +112,18 @@ const MainLayout = () => {
                     </NavLink>
                 </nav>
 
+                {/* Language Toggle */}
+                <div className="px-4 py-2">
+                    <button
+                        onClick={toggleLanguage}
+                        data-testid="desktop-language-toggle"
+                        className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl transition-colors font-semibold"
+                    >
+                        <Languages className="w-5 h-5" />
+                        {language === 'hi' ? 'English' : 'हिंदी'}
+                    </button>
+                </div>
+
                 {/* User Menu */}
                 <div className="p-4 border-t border-zinc-100">
                     <DropdownMenu>
@@ -148,6 +160,32 @@ const MainLayout = () => {
             <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white border-b border-zinc-200 flex items-center justify-between px-4 z-40">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-emerald-700 rounded-lg flex items-center justify-center">
+                        <Milk className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="font-heading font-bold text-zinc-900">Nirbani</span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={toggleLanguage}
+                        data-testid="mobile-language-toggle"
+                        className="text-xs h-8 px-3 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                    >
+                        <Languages className="w-3 h-3 mr-1" />
+                        {language === 'hi' ? 'EN' : 'हिं'}
+                    </Button>
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={logout}
+                        data-testid="mobile-logout"
+                        className="text-zinc-600 h-8 w-8"
+                    >
+                        <LogOut className="w-4 h-4" />
+                    </Button>
+                </div>
+            </header>
                         <Milk className="w-4 h-4 text-white" />
                     </div>
                     <span className="font-heading font-bold text-zinc-900">Nirbani</span>
