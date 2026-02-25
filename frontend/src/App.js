@@ -13,6 +13,7 @@ import FarmerDetailPage from './pages/FarmerDetailPage';
 import PaymentsPage from './pages/PaymentsPage';
 import RateChartPage from './pages/RateChartPage';
 import ReportsPage from './pages/ReportsPage';
+import SettingsPage from './pages/SettingsPage';
 
 // Layout
 import MainLayout from './components/layout/MainLayout';
@@ -57,6 +58,7 @@ const AppRoutes = () => {
                 <Route path="payments" element={<PaymentsPage />} />
                 <Route path="rate-chart" element={<RateChartPage />} />
                 <Route path="reports" element={<ReportsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
             </Route>
             
             <Route path="*" element={<Navigate to="/" replace />} />
