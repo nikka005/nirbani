@@ -300,6 +300,62 @@ const CustomerDetailPage = () => {
                 </form>
                 </DialogContent>
             </Dialog>
+
+            {/* Edit Customer Dialog */}
+            <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="font-heading flex items-center gap-2">
+                            <Edit className="w-5 h-5 text-emerald-600" />
+                            {t('Edit Customer', 'ग्राहक संपादित करें')}
+                        </DialogTitle>
+                        <DialogDescription>{t('Update customer details', 'ग्राहक की जानकारी अपडेट करें')}</DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleEdit} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>{t('Name', 'नाम')} *</Label>
+                            <Input value={editForm.name} onChange={(e) => setEditForm(p => ({...p, name: e.target.value}))}
+                                data-testid="edit-customer-name" className="h-12" required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>{t('Phone', 'फ़ोन')} *</Label>
+                            <Input type="tel" value={editForm.phone} onChange={(e) => setEditForm(p => ({...p, phone: e.target.value}))}
+                                data-testid="edit-customer-phone" className="h-12" required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>{t('Address', 'पता')}</Label>
+                            <Input value={editForm.address} onChange={(e) => setEditForm(p => ({...p, address: e.target.value}))}
+                                data-testid="edit-customer-address" className="h-12" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>{t('Type', 'प्रकार')}</Label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <button type="button" onClick={() => setEditForm(p => ({...p, customer_type: 'retail'}))}
+                                    data-testid="edit-customer-type-retail"
+                                    className={cn("p-3 rounded-lg border-2 flex items-center justify-center gap-2",
+                                        editForm.customer_type === 'retail' ? "border-emerald-500 bg-emerald-50" : "border-zinc-200")}>
+                                    <User className="w-4 h-4" />{t('Retail', 'खुदरा')}
+                                </button>
+                                <button type="button" onClick={() => setEditForm(p => ({...p, customer_type: 'wholesale'}))}
+                                    data-testid="edit-customer-type-wholesale"
+                                    className={cn("p-3 rounded-lg border-2 flex items-center justify-center gap-2",
+                                        editForm.customer_type === 'wholesale' ? "border-emerald-500 bg-emerald-50" : "border-zinc-200")}>
+                                    <Store className="w-4 h-4" />{t('Wholesale', 'थोक')}
+                                </button>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>GST</Label>
+                            <Input value={editForm.gst_number} onChange={(e) => setEditForm(p => ({...p, gst_number: e.target.value}))}
+                                data-testid="edit-customer-gst" className="h-12" placeholder="GST Number" />
+                        </div>
+                        <Button type="submit" data-testid="submit-edit-customer"
+                            className="w-full h-12 bg-emerald-700 hover:bg-emerald-800" disabled={submitting}>
+                            {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : t('Save', 'सहेजें')}
+                        </Button>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
