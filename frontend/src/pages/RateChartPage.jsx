@@ -29,10 +29,15 @@ import {
     Edit,
     Loader2,
     Star,
-    Check
+    Check,
+    Camera,
+    FileUp
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const RateChartPage = () => {
     const { language } = useAuth();
@@ -41,6 +46,8 @@ const RateChartPage = () => {
     const [submitting, setSubmitting] = useState(false);
     const [showAddDialog, setShowAddDialog] = useState(false);
     const [editingChart, setEditingChart] = useState(null);
+    const [ocrUploading, setOcrUploading] = useState(false);
+    const [ocrResult, setOcrResult] = useState(null);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -63,6 +70,8 @@ const RateChartPage = () => {
         entries: language === 'hi' ? 'प्रविष्टियाँ' : 'entries',
         success: language === 'hi' ? 'चार्ट सहेजा गया!' : 'Chart saved!',
         deleteConfirm: language === 'hi' ? 'क्या आप इसे हटाना चाहते हैं?' : 'Delete this chart?',
+        ocrUpload: language === 'hi' ? 'फोटो से अपलोड' : 'Upload from Photo',
+        ocrDesc: language === 'hi' ? 'दर चार्ट की फोटो/इमेज से AI OCR द्वारा दरें निकालें' : 'Extract rates from rate chart photo using AI OCR',
     };
 
     useEffect(() => {
@@ -154,6 +163,35 @@ const RateChartPage = () => {
         }));
     };
 
+    const handleOCRUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setOcrUploading(true);
+        setOcrResult(null);
+        const token = localStorage.getItem('auth_token');
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const response = await axios.post(`${BACKEND_URL}/api/rate-charts/ocr-upload`, formData, {
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+            });
+            setOcrResult(response.data);
+            if (response.data.success) {
+                toast.success(language === 'hi' 
+                    ? `${response.data.saved} दरें सहेजी गईं!` 
+                    : `${response.data.saved} rates saved!`);
+                fetchCharts();
+            } else {
+                toast.error(response.data.error || 'OCR failed');
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.detail || 'OCR upload failed');
+        } finally {
+            setOcrUploading(false);
+            e.target.value = '';
+        }
+    };
+
     const removeEntry = (index) => {
         if (formData.entries.length === 1) return;
         setFormData(prev => ({
@@ -174,23 +212,48 @@ const RateChartPage = () => {
     return (
         <div className="p-4 md:p-8 space-y-6 max-w-4xl mx-auto">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-3">
                 <h1 className="font-heading text-2xl font-bold text-zinc-900">
                     {texts.title}
                 </h1>
-                <Button 
-                    onClick={() => {
-                        setEditingChart(null);
-                        setFormData({ name: '', is_default: false, entries: [{ fat: '', snf: '', rate: '' }] });
-                        setShowAddDialog(true);
-                    }}
-                    data-testid="add-chart-btn"
-                    className="bg-emerald-700 hover:bg-emerald-800"
-                >
-                    <Plus className="w-4 h-4 mr-2" />
-                    {texts.addChart}
-                </Button>
+                <div className="flex items-center gap-2">
+                    <label className="cursor-pointer" data-testid="ocr-upload-label">
+                        <input type="file" accept="image/*" onChange={handleOCRUpload} className="hidden" data-testid="ocr-file-input" />
+                        <Button variant="outline" className="border-amber-200 text-amber-700 hover:bg-amber-50" asChild disabled={ocrUploading}>
+                            <span>
+                                {ocrUploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Camera className="w-4 h-4 mr-2" />}
+                                {texts.ocrUpload}
+                            </span>
+                        </Button>
+                    </label>
+                    <Button 
+                        onClick={() => {
+                            setEditingChart(null);
+                            setFormData({ name: '', is_default: false, entries: [{ fat: '', snf: '', rate: '' }] });
+                            setShowAddDialog(true);
+                        }}
+                        data-testid="add-chart-btn"
+                        className="bg-emerald-700 hover:bg-emerald-800"
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        {texts.addChart}
+                    </Button>
+                </div>
             </div>
+
+            {/* OCR Result */}
+            {ocrResult && ocrResult.success && (
+                <Card className="border-amber-200 bg-amber-50/50" data-testid="ocr-result">
+                    <CardContent className="p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Camera className="w-4 h-4 text-amber-600" />
+                            <span className="font-semibold text-amber-800">
+                                {language === 'hi' ? 'AI OCR परिणाम' : 'AI OCR Result'}: {ocrResult.extracted} {language === 'hi' ? 'दरें पाई गईं' : 'rates found'}, {ocrResult.saved} {language === 'hi' ? 'सहेजी गईं' : 'saved'}
+                            </span>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Charts List */}
             {loading ? (
