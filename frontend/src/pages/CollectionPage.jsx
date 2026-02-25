@@ -337,10 +337,19 @@ const CollectionPage = () => {
                                         <div className="flex items-center gap-2 text-xs text-zinc-500 mt-0.5">
                                             <span className="font-semibold text-zinc-700">{formatNumber(c.quantity)} L</span>
                                             <span>|</span>
-                                            <span>Fat: {c.fat}%</span>
-                                            <span>|</span>
-                                            <span>SNF: {c.snf}%</span>
-                                            <span>|</span>
+                                            {c.fat > 0 ? (
+                                                <>
+                                                    <span>Fat: {c.fat}%</span>
+                                                    <span>|</span>
+                                                    <span>SNF: {c.snf}%</span>
+                                                    <span>|</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span className="text-emerald-600 font-semibold">{t('Fixed Rate', 'निश्चित दर')}</span>
+                                                    <span>|</span>
+                                                </>
+                                            )}
                                             <span>@₹{c.rate}/L</span>
                                         </div>
                                     </div>
