@@ -85,6 +85,8 @@ class FarmerCreate(BaseModel):
     bank_account: Optional[str] = ""
     ifsc_code: Optional[str] = ""
     aadhar_number: Optional[str] = ""
+    milk_type: Optional[str] = "cow"  # cow, buffalo, mix
+    fixed_rate: Optional[float] = None  # if set, use this rate instead of rate chart
 
 class FarmerResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -96,6 +98,8 @@ class FarmerResponse(BaseModel):
     bank_account: str
     ifsc_code: str
     aadhar_number: str
+    milk_type: str = "cow"
+    fixed_rate: Optional[float] = None
     total_milk: float
     total_due: float
     total_paid: float
@@ -112,6 +116,8 @@ class FarmerUpdate(BaseModel):
     ifsc_code: Optional[str] = None
     aadhar_number: Optional[str] = None
     is_active: Optional[bool] = None
+    milk_type: Optional[str] = None
+    fixed_rate: Optional[float] = None
 
 # Milk Collection Models
 class MilkCollectionCreate(BaseModel):
