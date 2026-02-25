@@ -86,6 +86,15 @@ const FarmerDetailPage = () => {
         accountNo: language === 'hi' ? 'खाता नंबर' : 'Account No',
         ifscCode: language === 'hi' ? 'IFSC कोड' : 'IFSC Code',
         aadhar: language === 'hi' ? 'आधार' : 'Aadhar',
+        edit: language === 'hi' ? 'संपादन' : 'Edit',
+        editFarmer: language === 'hi' ? 'किसान संपादित करें' : 'Edit Farmer',
+        milkType: language === 'hi' ? 'दूध का प्रकार' : 'Milk Type',
+        fixedRate: language === 'hi' ? 'निश्चित दर (₹/L)' : 'Fixed Rate (₹/L)',
+        village: language === 'hi' ? 'गाँव' : 'Village',
+        nameLabel: language === 'hi' ? 'नाम' : 'Name',
+        phoneLabel: language === 'hi' ? 'फ़ोन' : 'Phone',
+        addressLabel: language === 'hi' ? 'पता' : 'Address',
+        updated: language === 'hi' ? 'किसान अपडेट हुआ!' : 'Farmer updated!',
     };
 
     const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
