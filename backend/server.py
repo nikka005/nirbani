@@ -2298,6 +2298,266 @@ async def export_expenses(
         headers={"Content-Disposition": f"attachment; filename=expenses_{start_date}_to_{end_date}.csv"}
     )
 
+# ==================== THERMAL PRINTER BILL ====================
+
+@api_router.get("/bills/thermal/{farmer_id}", response_class=HTMLResponse)
+async def thermal_bill(farmer_id: str, start_date: Optional[str] = None, end_date: Optional[str] = None):
+    """Generate thermal printer friendly bill (58mm/80mm)"""
+    farmer = await db.farmers.find_one({"id": farmer_id}, {"_id": 0})
+    if not farmer:
+        raise HTTPException(status_code=404, detail="Farmer not found")
+    
+    if not end_date:
+        end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    if not start_date:
+        start_date = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%d")
+    
+    collections = await db.milk_collections.find(
+        {"farmer_id": farmer_id, "date": {"$gte": start_date, "$lte": end_date}}, {"_id": 0}
+    ).sort("date", 1).to_list(1000)
+    
+    payments = await db.payments.find(
+        {"farmer_id": farmer_id, "date": {"$gte": start_date, "$lte": end_date}}, {"_id": 0}
+    ).sort("date", 1).to_list(1000)
+    
+    settings = await db.settings.find_one({"type": "dairy_info"}, {"_id": 0}) or {}
+    dairy_name = settings.get("dairy_name", "Nirbani Dairy")
+    dairy_phone = settings.get("phone", "")
+    
+    total_milk = sum(c["quantity"] for c in collections)
+    total_amount = sum(c["amount"] for c in collections)
+    total_paid = sum(p["amount"] for p in payments)
+    balance = total_amount - total_paid
+    
+    rows = ""
+    for c in collections:
+        shift = "AM" if c["shift"] == "morning" else "PM"
+        rows += f"<tr><td>{c['date'][5:]}</td><td>{shift}</td><td>{c['quantity']}</td><td>{c['fat']}</td><td>{c['rate']}</td><td style='text-align:right'>{c['amount']:.0f}</td></tr>\n"
+    
+    pay_rows = ""
+    for p in payments:
+        pay_rows += f"<tr><td>{p['date'][5:]}</td><td>{p['payment_mode']}</td><td style='text-align:right'>{p['amount']:.0f}</td></tr>\n"
+    
+    html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=58mm">
+<style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{font-family:'Courier New',monospace;font-size:11px;width:58mm;padding:2mm;color:#000}}
+.center{{text-align:center}}.bold{{font-weight:bold}}.line{{border-top:1px dashed #000;margin:3px 0}}
+table{{width:100%;border-collapse:collapse}}
+td,th{{padding:1px 2px;font-size:10px;vertical-align:top}}
+th{{text-align:left;border-bottom:1px solid #000}}
+.right{{text-align:right}}.big{{font-size:14px}}
+@media print{{@page{{size:58mm auto;margin:0}}body{{width:58mm}}}}
+</style></head><body>
+<div class="center bold big">{dairy_name}</div>
+<div class="center" style="font-size:9px">{dairy_phone}</div>
+<div class="line"></div>
+<div class="bold">{farmer['name']}</div>
+<div style="font-size:9px">Ph: {farmer['phone']}</div>
+<div style="font-size:9px">{start_date} to {end_date}</div>
+<div class="line"></div>
+<table><tr><th>Date</th><th>S</th><th>Qty</th><th>Fat</th><th>Rate</th><th class="right">Amt</th></tr>
+{rows}</table>
+<div class="line"></div>
+<table>
+<tr><td class="bold">Total Milk:</td><td class="right bold">{total_milk:.1f} L</td></tr>
+<tr><td class="bold">Total Amt:</td><td class="right bold">Rs.{total_amount:.0f}</td></tr>
+<tr><td class="bold">Paid:</td><td class="right bold">Rs.{total_paid:.0f}</td></tr>
+<tr><td class="bold">Balance:</td><td class="right bold">Rs.{balance:.0f}</td></tr>
+</table>
+{f'<div class="line"></div><div class="bold" style="font-size:9px">Payments:</div><table><tr><th>Date</th><th>Mode</th><th class="right">Amt</th></tr>{pay_rows}</table>' if payments else ''}
+<div class="line"></div>
+<div class="center" style="font-size:9px;margin-top:3px">Thank You / धन्यवाद</div>
+<div class="center" style="font-size:8px">Printed: {datetime.now(timezone.utc).strftime("%d-%m-%Y %H:%M")}</div>
+</body></html>"""
+    return HTMLResponse(content=html)
+
+# ==================== A4 INVOICE ====================
+
+@api_router.get("/bills/a4/{farmer_id}", response_class=HTMLResponse)
+async def a4_invoice(farmer_id: str, start_date: Optional[str] = None, end_date: Optional[str] = None):
+    """Generate A4 professional invoice"""
+    farmer = await db.farmers.find_one({"id": farmer_id}, {"_id": 0})
+    if not farmer:
+        raise HTTPException(status_code=404, detail="Farmer not found")
+    
+    if not end_date:
+        end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    if not start_date:
+        start_date = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%d")
+    
+    collections = await db.milk_collections.find(
+        {"farmer_id": farmer_id, "date": {"$gte": start_date, "$lte": end_date}}, {"_id": 0}
+    ).sort("date", 1).to_list(1000)
+    
+    payments = await db.payments.find(
+        {"farmer_id": farmer_id, "date": {"$gte": start_date, "$lte": end_date}}, {"_id": 0}
+    ).sort("date", 1).to_list(1000)
+    
+    settings = await db.settings.find_one({"type": "dairy_info"}, {"_id": 0}) or {}
+    dairy_name = settings.get("dairy_name", "Nirbani Dairy")
+    dairy_phone = settings.get("phone", "")
+    dairy_address = settings.get("address", "")
+    
+    total_milk = sum(c["quantity"] for c in collections)
+    total_amount = sum(c["amount"] for c in collections)
+    avg_fat = sum(c["fat"] * c["quantity"] for c in collections) / total_milk if total_milk > 0 else 0
+    avg_snf = sum(c["snf"] * c["quantity"] for c in collections) / total_milk if total_milk > 0 else 0
+    total_paid = sum(p["amount"] for p in payments)
+    balance = total_amount - total_paid
+    invoice_no = f"INV-{farmer_id[:8].upper()}-{datetime.now(timezone.utc).strftime('%Y%m%d')}"
+    
+    coll_rows = ""
+    for i, c in enumerate(collections, 1):
+        shift_label = "Morning / सुबह" if c["shift"] == "morning" else "Evening / शाम"
+        coll_rows += f"""<tr><td>{i}</td><td>{c['date']}</td><td>{shift_label}</td><td>{c['quantity']:.1f}</td><td>{c['fat']:.1f}</td><td>{c['snf']:.1f}</td><td>{c['rate']:.2f}</td><td class="right">{c['amount']:.2f}</td></tr>"""
+    
+    pay_rows = ""
+    for p in payments:
+        mode = p.get("payment_mode", "cash").upper()
+        pay_rows += f"<tr><td>{p['date']}</td><td>{mode}</td><td>{p.get('notes','')}</td><td class='right'>{p['amount']:.2f}</td></tr>"
+    
+    html = f"""<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{font-family:'Segoe UI',Arial,sans-serif;font-size:12px;color:#1a1a1a;padding:15mm 20mm;max-width:210mm}}
+.header{{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #15803d;padding-bottom:12px;margin-bottom:15px}}
+.dairy-name{{font-size:24px;font-weight:bold;color:#15803d}}.dairy-info{{font-size:10px;color:#666;margin-top:4px}}
+.invoice-box{{text-align:right}}.invoice-title{{font-size:20px;color:#15803d;font-weight:bold}}.invoice-no{{font-size:11px;color:#666;margin-top:2px}}
+.info-grid{{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px}}
+.info-card{{background:#f8faf8;border:1px solid #e5e7eb;border-radius:6px;padding:10px}}
+.info-label{{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:0.5px}}.info-value{{font-size:13px;font-weight:600;margin-top:2px}}
+table{{width:100%;border-collapse:collapse;margin-bottom:15px}}
+th{{background:#15803d;color:white;padding:6px 8px;text-align:left;font-size:10px;text-transform:uppercase}}
+td{{padding:5px 8px;border-bottom:1px solid #eee;font-size:11px}}.right{{text-align:right}}
+tr:nth-child(even){{background:#f9fafb}}
+.summary-grid{{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin:15px 0}}
+.summary-box{{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:10px;text-align:center}}
+.summary-box.due{{background:#fef2f2;border-color:#fecaca}}
+.summary-label{{font-size:9px;color:#666;text-transform:uppercase}}.summary-value{{font-size:18px;font-weight:bold;color:#15803d;margin-top:2px}}
+.summary-box.due .summary-value{{color:#dc2626}}
+.footer{{margin-top:20px;border-top:2px solid #15803d;padding-top:10px;display:flex;justify-content:space-between;font-size:10px;color:#666}}
+.sig-box{{border-top:1px solid #333;width:150px;text-align:center;padding-top:5px;margin-top:40px;font-size:10px}}
+h3{{color:#15803d;font-size:13px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #d1fae5}}
+@media print{{@page{{size:A4;margin:10mm}}body{{padding:0}}}}
+</style></head><body>
+<div class="header">
+  <div><div class="dairy-name">{dairy_name}</div><div class="dairy-info">{dairy_address}<br>{dairy_phone}</div></div>
+  <div class="invoice-box"><div class="invoice-title">INVOICE / बिल</div><div class="invoice-no">{invoice_no}</div><div class="invoice-no">{start_date} to {end_date}</div></div>
+</div>
+<div class="info-grid">
+  <div class="info-card"><div class="info-label">Farmer / किसान</div><div class="info-value">{farmer['name']}</div><div style="font-size:10px;color:#666">Ph: {farmer['phone']}{f" | Village: {farmer.get('village','')}" if farmer.get('village') else ''}</div></div>
+  <div class="info-card"><div class="info-label">Account / Bank</div><div class="info-value">{farmer.get('bank_account','N/A')}</div><div style="font-size:10px;color:#666">IFSC: {farmer.get('ifsc_code','N/A')}</div></div>
+</div>
+<div class="summary-grid">
+  <div class="summary-box"><div class="summary-label">Total Milk / कुल दूध</div><div class="summary-value">{total_milk:.1f} L</div></div>
+  <div class="summary-box"><div class="summary-label">Avg Fat / औसत फैट</div><div class="summary-value">{avg_fat:.1f}%</div></div>
+  <div class="summary-box"><div class="summary-label">Total Amount / कुल राशि</div><div class="summary-value">₹{total_amount:.0f}</div></div>
+  <div class="summary-box {'due' if balance > 0 else ''}"><div class="summary-label">Balance / बकाया</div><div class="summary-value">₹{balance:.0f}</div></div>
+</div>
+<h3>Milk Collection Details / दूध संग्रह विवरण</h3>
+<table><tr><th>#</th><th>Date</th><th>Shift / पाली</th><th>Qty (L)</th><th>Fat %</th><th>SNF %</th><th>Rate ₹/L</th><th class="right">Amount ₹</th></tr>
+{coll_rows}
+<tr style="background:#15803d;color:white;font-weight:bold"><td colspan="3">TOTAL</td><td>{total_milk:.1f}</td><td>{avg_fat:.1f}</td><td>{avg_snf:.1f}</td><td></td><td class="right">₹{total_amount:.2f}</td></tr>
+</table>
+{f'<h3>Payments / भुगतान</h3><table><tr><th>Date</th><th>Mode</th><th>Notes</th><th class="right">Amount ₹</th></tr>{pay_rows}<tr style="background:#15803d;color:white;font-weight:bold"><td colspan="3">TOTAL PAID</td><td class="right">₹{total_paid:.2f}</td></tr></table>' if payments else ''}
+<div style="display:flex;justify-content:flex-end;gap:40px;margin-top:30px">
+  <div class="sig-box">Dairy Stamp / डेयरी मुहर</div>
+  <div class="sig-box">Authorized Signature / हस्ताक्षर</div>
+</div>
+<div class="footer"><div>Generated: {datetime.now(timezone.utc).strftime("%d-%m-%Y %H:%M UTC")}</div><div>{dairy_name} | {dairy_phone}</div></div>
+</body></html>"""
+    return HTMLResponse(content=html)
+
+# ==================== OCR RATE CHART UPLOAD ====================
+
+@api_router.post("/rate-charts/ocr-upload")
+async def ocr_rate_chart_upload(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Upload image/PDF of rate chart and extract fat/SNF rates using AI OCR"""
+    import base64
+    
+    llm_key = os.environ.get("EMERGENT_LLM_KEY")
+    if not llm_key:
+        raise HTTPException(status_code=500, detail="LLM key not configured")
+    
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No file provided")
+    
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+    if ext not in ("jpg", "jpeg", "png", "webp", "pdf"):
+        raise HTTPException(status_code=400, detail="Only JPG, PNG, WEBP, or PDF files are supported")
+    
+    content = await file.read()
+    
+    if ext == "pdf":
+        raise HTTPException(status_code=400, detail="Please upload an image (JPG/PNG/WEBP) of the rate chart. PDF OCR coming soon.")
+    
+    image_b64 = base64.b64encode(content).decode("utf-8")
+    
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
+        
+        chat = LlmChat(
+            api_key=llm_key,
+            session_id=f"ocr-{uuid.uuid4()}",
+            system_message="""You are a dairy rate chart OCR expert. Extract milk rate data from images.
+Return ONLY a valid JSON array where each entry has: {"fat": number, "snf": number, "rate": number}
+Example: [{"fat": 3.0, "snf": 8.0, "rate": 25.50}, {"fat": 3.5, "snf": 8.5, "rate": 28.00}]
+If SNF is not visible, estimate it as (fat * 2) + 0.5.
+Return ONLY the JSON array, no markdown, no explanation."""
+        )
+        chat.with_model("openai", "gpt-4o")
+        
+        image_content = ImageContent(image_base64=image_b64)
+        user_msg = UserMessage(
+            text="Extract ALL fat, SNF, and rate values from this dairy milk rate chart image. Return as JSON array.",
+            file_contents=[image_content]
+        )
+        
+        response = await chat.send_message(user_msg)
+        
+        import json
+        response_text = response.strip()
+        if response_text.startswith("```"):
+            response_text = response_text.split("\n", 1)[1] if "\n" in response_text else response_text[3:]
+            response_text = response_text.rsplit("```", 1)[0]
+        
+        rate_data = json.loads(response_text.strip())
+        
+        if not isinstance(rate_data, list):
+            raise ValueError("Response is not a list")
+        
+        inserted = 0
+        for entry in rate_data:
+            fat = float(entry.get("fat", 0))
+            snf = float(entry.get("snf", 0))
+            rate = float(entry.get("rate", 0))
+            if fat > 0 and rate > 0:
+                existing = await db.rate_charts.find_one({"fat": fat, "snf": snf}, {"_id": 0})
+                if existing:
+                    await db.rate_charts.update_one({"fat": fat, "snf": snf}, {"$set": {"rate": rate}})
+                else:
+                    await db.rate_charts.insert_one({
+                        "id": str(uuid.uuid4()), "fat": fat, "snf": snf,
+                        "rate": rate, "created_at": datetime.now(timezone.utc).isoformat()
+                    })
+                inserted += 1
+        
+        return {
+            "success": True, "extracted": len(rate_data), "saved": inserted,
+            "rates": rate_data,
+            "message": f"Successfully extracted {len(rate_data)} rates, saved {inserted} to rate chart"
+        }
+    
+    except json.JSONDecodeError:
+        return {"success": False, "error": "Could not parse rate data from image. Please try with a clearer image."}
+    except Exception as e:
+        logging.error(f"OCR Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"OCR processing failed: {str(e)}")
+
 # ==================== HEALTH CHECK ====================
 
 @api_router.get("/")
