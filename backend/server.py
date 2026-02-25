@@ -1,6 +1,6 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, UploadFile, File
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -1388,6 +1388,132 @@ async def get_farmer_template():
     template = "name,phone,village,address,bank_account,ifsc_code,aadhar_number\n"
     template += "रामलाल,9876543210,गोकुलपुर,मुख्य बाजार,1234567890,SBIN0001234,123456789012\n"
     return {"template": template, "columns": ["name", "phone", "village", "address", "bank_account", "ifsc_code", "aadhar_number"]}
+
+@api_router.post("/bulk/upload-file")
+async def bulk_upload_file(
+    file: UploadFile = File(...),
+    upload_type: str = "collections",
+    current_user: dict = Depends(get_current_user)
+):
+    """Upload Excel/CSV file for bulk data import"""
+    import io
+    
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No file provided")
+    
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+    if ext not in ("csv", "xlsx", "xls"):
+        raise HTTPException(status_code=400, detail="Only CSV and Excel files are supported")
+    
+    content = await file.read()
+    rows = []
+    
+    try:
+        if ext == "csv":
+            import csv
+            text = content.decode("utf-8-sig")
+            reader = csv.DictReader(io.StringIO(text))
+            rows = [dict(row) for row in reader]
+        elif ext in ("xlsx", "xls"):
+            import openpyxl
+            wb = openpyxl.load_workbook(io.BytesIO(content), read_only=True)
+            ws = wb.active
+            headers = [str(cell.value or "").strip().lower() for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                row_dict = {}
+                for i, val in enumerate(row):
+                    if i < len(headers) and headers[i]:
+                        row_dict[headers[i]] = str(val).strip() if val is not None else ""
+                if any(row_dict.values()):
+                    rows.append(row_dict)
+            wb.close()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error parsing file: {str(e)}")
+    
+    if not rows:
+        raise HTTPException(status_code=400, detail="No data found in file")
+    
+    results = {"success": 0, "failed": 0, "errors": []}
+    
+    if upload_type == "collections":
+        for row in rows:
+            try:
+                phone = row.get("farmer_phone", row.get("phone", "")).strip()
+                farmer = await db.farmers.find_one({"phone": phone}, {"_id": 0})
+                if not farmer:
+                    results["failed"] += 1
+                    results["errors"].append(f"Farmer not found: {phone}")
+                    continue
+                
+                shift = row.get("shift", "morning").strip().lower()
+                quantity = float(row.get("quantity", 0))
+                fat = float(row.get("fat", 0))
+                snf_val = row.get("snf", "")
+                snf = float(snf_val) if snf_val else calculate_snf(fat)
+                
+                today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                existing = await db.milk_collections.find_one({
+                    "farmer_id": farmer["id"], "date": today, "shift": shift
+                }, {"_id": 0})
+                
+                if existing:
+                    results["failed"] += 1
+                    results["errors"].append(f"Duplicate: {farmer['name']} ({shift})")
+                    continue
+                
+                rate = await get_milk_rate(fat, snf)
+                amount = round(quantity * rate, 2)
+                collection_id = str(uuid.uuid4())
+                now = datetime.now(timezone.utc)
+                
+                await db.milk_collections.insert_one({
+                    "id": collection_id, "farmer_id": farmer["id"],
+                    "farmer_name": farmer["name"], "shift": shift,
+                    "quantity": quantity, "fat": fat, "snf": snf,
+                    "rate": rate, "amount": amount, "date": today,
+                    "created_at": now.isoformat()
+                })
+                
+                await db.farmers.update_one(
+                    {"id": farmer["id"]},
+                    {"$inc": {"total_milk": quantity, "total_due": amount, "balance": amount}}
+                )
+                results["success"] += 1
+            except Exception as e:
+                results["failed"] += 1
+                results["errors"].append(str(e))
+    else:
+        for row in rows:
+            try:
+                name = row.get("name", "").strip()
+                phone = row.get("phone", "").strip()
+                if not name or not phone:
+                    results["failed"] += 1
+                    results["errors"].append(f"Missing name/phone in row")
+                    continue
+                
+                existing = await db.farmers.find_one({"phone": phone}, {"_id": 0})
+                if existing:
+                    results["failed"] += 1
+                    results["errors"].append(f"Phone exists: {phone}")
+                    continue
+                
+                farmer_id = str(uuid.uuid4())
+                now = datetime.now(timezone.utc).isoformat()
+                await db.farmers.insert_one({
+                    "id": farmer_id, "name": name, "phone": phone,
+                    "address": row.get("address", ""), "village": row.get("village", ""),
+                    "bank_account": row.get("bank_account", ""), "ifsc_code": row.get("ifsc_code", ""),
+                    "aadhar_number": row.get("aadhar_number", ""),
+                    "total_milk": 0.0, "total_due": 0.0, "total_paid": 0.0, "balance": 0.0,
+                    "created_at": now, "is_active": True
+                })
+                results["success"] += 1
+            except Exception as e:
+                results["failed"] += 1
+                results["errors"].append(str(e))
+    
+    return results
 
 # ==================== WHATSAPP SHARING ROUTES ====================
 
