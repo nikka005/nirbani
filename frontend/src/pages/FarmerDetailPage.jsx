@@ -270,6 +270,10 @@ const FarmerDetailPage = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
+                    <Button variant="outline" size="sm" onClick={openEditDialog} data-testid="edit-farmer-btn"
+                        className="border-zinc-200 text-zinc-700 hover:bg-zinc-50 h-8 text-xs">
+                        <Edit className="w-3 h-3 mr-1" />{texts.edit}
+                    </Button>
                     <Button variant="outline" size="sm" onClick={handleWhatsAppShare} data-testid="whatsapp-share-btn"
                         className="border-green-200 text-green-700 hover:bg-green-50 h-8 text-xs">
                         <Share2 className="w-3 h-3 mr-1" />WA
