@@ -501,6 +501,20 @@ async def create_collection(
         }
     )
     
+    # Send SMS notification (async, don't block on failure)
+    try:
+        send_collection_sms(
+            farmer_name=farmer["name"],
+            farmer_phone=farmer["phone"],
+            quantity=collection.quantity,
+            fat=collection.fat,
+            rate=rate,
+            amount=amount,
+            shift=collection.shift
+        )
+    except Exception as e:
+        logger.warning(f"Failed to send collection SMS: {e}")
+    
     return MilkCollectionResponse(**collection_doc)
 
 @api_router.get("/collections", response_model=List[MilkCollectionResponse])
