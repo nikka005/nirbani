@@ -804,9 +804,7 @@ async def create_payment(
         await db.farmers.update_one(
             {"id": payment.farmer_id},
             {"$inc": {"total_paid": payment.amount, "balance": -payment.amount}}
-            }
-        }
-    )
+        )
     
     # Calculate new balance and send SMS
     new_balance = farmer["balance"] - payment.amount
