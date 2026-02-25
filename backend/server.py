@@ -170,8 +170,8 @@ class PaymentResponse(BaseModel):
     farmer_name: str
     amount: float
     payment_mode: str
-    payment_type: str
-    notes: str
+    payment_type: str = "payment"
+    notes: str = ""
     date: str
     created_at: str
 
