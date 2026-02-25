@@ -174,14 +174,25 @@ const FarmerDetailPage = () => {
                         )}
                     </div>
                 </div>
-                <Button
-                    onClick={() => setShowPaymentDialog(true)}
-                    data-testid="make-payment-btn"
-                    className="bg-emerald-700 hover:bg-emerald-800"
-                >
-                    <Plus className="w-4 h-4 mr-2" />
-                    {texts.makePayment}
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={openBill}
+                        data-testid="print-bill-btn"
+                        className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                    >
+                        <Printer className="w-4 h-4 mr-2" />
+                        {texts.printBill}
+                    </Button>
+                    <Button
+                        onClick={() => setShowPaymentDialog(true)}
+                        data-testid="make-payment-btn"
+                        className="bg-emerald-700 hover:bg-emerald-800"
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        {texts.makePayment}
+                    </Button>
+                </div>
             </div>
 
             {/* Summary Cards */}
