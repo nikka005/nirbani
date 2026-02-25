@@ -377,8 +377,21 @@ const CollectionPage = () => {
                                                     <div className="farmer-avatar w-8 h-8 text-sm">
                                                         {farmer.name.charAt(0)}
                                                     </div>
-                                                    <div>
-                                                        <p className="font-semibold text-sm">{farmer.name}</p>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="font-semibold text-sm">{farmer.name}</p>
+                                                            <span className={cn(
+                                                                "px-1 py-0.5 rounded text-[8px] font-bold uppercase",
+                                                                farmer.milk_type === 'buffalo' ? "bg-amber-100 text-amber-700" :
+                                                                farmer.milk_type === 'mix' ? "bg-purple-100 text-purple-700" :
+                                                                "bg-blue-100 text-blue-700"
+                                                            )}>
+                                                                {farmer.milk_type === 'buffalo' ? 'BUF' : farmer.milk_type === 'mix' ? 'MIX' : 'COW'}
+                                                            </span>
+                                                            {farmer.fixed_rate && (
+                                                                <span className="text-[9px] text-emerald-600 font-bold">₹{farmer.fixed_rate}/L</span>
+                                                            )}
+                                                        </div>
                                                         <p className="text-xs text-zinc-500">{farmer.phone}</p>
                                                     </div>
                                                 </button>
