@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -13,7 +13,8 @@ import {
     Loader2,
     CheckCircle,
     XCircle,
-    AlertCircle
+    AlertCircle,
+    FileUp
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -26,6 +27,8 @@ const BulkUploadPage = () => {
     const [csvData, setCsvData] = useState('');
     const [uploading, setUploading] = useState(false);
     const [results, setResults] = useState(null);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const fileInputRef = useRef(null);
 
     const texts = {
         title: language === 'hi' ? 'बल्क अपलोड' : 'Bulk Upload',
@@ -37,6 +40,8 @@ const BulkUploadPage = () => {
         success: language === 'hi' ? 'सफल' : 'Success',
         failed: language === 'hi' ? 'विफल' : 'Failed',
         errors: language === 'hi' ? 'त्रुटियाँ' : 'Errors',
+        orUploadFile: language === 'hi' ? 'या Excel/CSV फ़ाइल अपलोड करें' : 'Or upload Excel/CSV file',
+        selectFile: language === 'hi' ? 'फ़ाइल चुनें' : 'Select File',
         instructions: language === 'hi' 
             ? 'Excel/CSV फ़ाइल से डेटा कॉपी करके नीचे पेस्ट करें' 
             : 'Copy data from Excel/CSV file and paste below',
@@ -54,8 +59,6 @@ const BulkUploadPage = () => {
             const response = await axios.get(`${BACKEND_URL}/api/bulk/template/${type}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            
-            // Create and download CSV file
             const blob = new Blob([response.data.template], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -65,7 +68,6 @@ const BulkUploadPage = () => {
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
-            
             toast.success(language === 'hi' ? 'टेम्पलेट डाउनलोड हुआ' : 'Template downloaded');
         } catch (error) {
             toast.error('Error downloading template');
@@ -75,43 +77,66 @@ const BulkUploadPage = () => {
     const parseCSV = (csv) => {
         const lines = csv.trim().split('\n');
         if (lines.length < 2) return [];
-        
         const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
         const data = [];
-        
         for (let i = 1; i < lines.length; i++) {
             const values = lines[i].split(',').map(v => v.trim());
             if (values.length === headers.length) {
                 const row = {};
-                headers.forEach((h, idx) => {
-                    row[h] = values[idx];
-                });
+                headers.forEach((h, idx) => { row[h] = values[idx]; });
                 data.push(row);
             }
         }
-        
         return data;
     };
 
-    const handleUpload = async () => {
+    const handleFileUpload = async () => {
+        if (!selectedFile) {
+            toast.error(language === 'hi' ? 'फ़ाइल चुनें' : 'Select a file');
+            return;
+        }
+        setUploading(true);
+        setResults(null);
+        const token = localStorage.getItem('auth_token');
+        try {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            const response = await axios.post(
+                `${BACKEND_URL}/api/bulk/upload-file?upload_type=${activeTab}`,
+                formData,
+                { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
+            );
+            setResults(response.data);
+            if (response.data.success > 0) {
+                toast.success(`${response.data.success} ${language === 'hi' ? 'प्रविष्टियाँ सफल' : 'entries successful'}`);
+            }
+            if (response.data.failed > 0) {
+                toast.error(`${response.data.failed} ${language === 'hi' ? 'प्रविष्टियाँ विफल' : 'entries failed'}`);
+            }
+            setSelectedFile(null);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        } catch (error) {
+            toast.error(error.response?.data?.detail || 'Upload failed');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleCSVUpload = async () => {
         if (!csvData.trim()) {
             toast.error(language === 'hi' ? 'कृपया डेटा पेस्ट करें' : 'Please paste data');
             return;
         }
-
         setUploading(true);
         setResults(null);
         const token = localStorage.getItem('auth_token');
-
         try {
             const parsedData = parseCSV(csvData);
-            
             if (parsedData.length === 0) {
                 toast.error(language === 'hi' ? 'कोई वैध डेटा नहीं मिला' : 'No valid data found');
                 setUploading(false);
                 return;
             }
-
             let response;
             if (activeTab === 'collections') {
                 const entries = parsedData.map(row => ({
@@ -121,43 +146,105 @@ const BulkUploadPage = () => {
                     fat: parseFloat(row.fat) || 0,
                     snf: row.snf ? parseFloat(row.snf) : null,
                 }));
-                
                 response = await axios.post(`${BACKEND_URL}/api/bulk/collections`, 
-                    { entries },
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
+                    { entries }, { headers: { Authorization: `Bearer ${token}` } });
             } else {
                 const farmers = parsedData.map(row => ({
-                    name: row.name,
-                    phone: row.phone,
-                    village: row.village || '',
-                    address: row.address || '',
-                    bank_account: row.bank_account || '',
-                    ifsc_code: row.ifsc_code || '',
+                    name: row.name, phone: row.phone,
+                    village: row.village || '', address: row.address || '',
+                    bank_account: row.bank_account || '', ifsc_code: row.ifsc_code || '',
                     aadhar_number: row.aadhar_number || '',
                 }));
-                
                 response = await axios.post(`${BACKEND_URL}/api/bulk/farmers`, 
-                    farmers,
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
+                    farmers, { headers: { Authorization: `Bearer ${token}` } });
             }
-
             setResults(response.data);
-            
-            if (response.data.success > 0) {
-                toast.success(`${response.data.success} ${language === 'hi' ? 'प्रविष्टियाँ सफल' : 'entries successful'}`);
-            }
-            if (response.data.failed > 0) {
-                toast.error(`${response.data.failed} ${language === 'hi' ? 'प्रविष्टियाँ विफल' : 'entries failed'}`);
-            }
-            
+            if (response.data.success > 0) toast.success(`${response.data.success} entries successful`);
+            if (response.data.failed > 0) toast.error(`${response.data.failed} entries failed`);
         } catch (error) {
             toast.error(error.response?.data?.detail || 'Upload failed');
         } finally {
             setUploading(false);
         }
     };
+
+    const renderUploadContent = (type) => (
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-heading flex items-center gap-2">
+                    <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+                    {type === 'collections' ? texts.collections : texts.farmers}
+                </CardTitle>
+                <CardDescription>{type === 'collections' ? texts.collectionFormat : texts.farmerFormat}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <Button variant="outline" onClick={() => downloadTemplate(type)} data-testid={`download-${type}-template`}>
+                    <Download className="w-4 h-4 mr-2" />
+                    {texts.downloadTemplate}
+                </Button>
+
+                {/* File Upload */}
+                <div className="border-2 border-dashed border-zinc-200 rounded-xl p-6 text-center hover:border-emerald-300 transition-colors">
+                    <FileUp className="w-8 h-8 mx-auto mb-2 text-zinc-400" />
+                    <p className="text-sm text-zinc-600 mb-3">{texts.orUploadFile}</p>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".csv,.xlsx,.xls"
+                        onChange={(e) => setSelectedFile(e.target.files[0])}
+                        className="hidden"
+                        data-testid={`file-input-${type}`}
+                    />
+                    <div className="flex items-center justify-center gap-3">
+                        <Button variant="outline" onClick={() => fileInputRef.current?.click()} data-testid={`select-file-${type}`}>
+                            {texts.selectFile}
+                        </Button>
+                        {selectedFile && (
+                            <span className="text-sm text-emerald-600 font-semibold">{selectedFile.name}</span>
+                        )}
+                    </div>
+                    {selectedFile && (
+                        <Button 
+                            onClick={handleFileUpload} 
+                            className="mt-3 bg-emerald-700 hover:bg-emerald-800"
+                            disabled={uploading}
+                            data-testid={`upload-file-${type}`}
+                        >
+                            {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                                <><Upload className="w-4 h-4 mr-2" />{texts.upload}</>
+                            )}
+                        </Button>
+                    )}
+                </div>
+
+                {/* CSV Paste */}
+                <div className="space-y-2">
+                    <p className="text-sm text-zinc-600 font-semibold">{texts.instructions}</p>
+                    <Textarea
+                        value={csvData}
+                        onChange={(e) => setCsvData(e.target.value)}
+                        placeholder={type === 'collections' 
+                            ? "farmer_phone,shift,quantity,fat,snf\n9876543210,morning,5.5,4.2,8.5"
+                            : "name,phone,village,address\nRam,9876543210,Gokulpur,Main Market"}
+                        rows={6}
+                        className="font-mono text-sm"
+                        data-testid={`csv-textarea-${type}`}
+                    />
+                </div>
+
+                <Button 
+                    onClick={handleCSVUpload} 
+                    className="w-full h-12 bg-emerald-700 hover:bg-emerald-800"
+                    disabled={uploading}
+                    data-testid={`csv-upload-${type}`}
+                >
+                    {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                        <><Upload className="w-5 h-5 mr-2" />{texts.upload} (CSV)</>
+                    )}
+                </Button>
+            </CardContent>
+        </Card>
+    );
 
     return (
         <div className="p-4 md:p-8 space-y-6 max-w-4xl mx-auto">
@@ -173,117 +260,23 @@ const BulkUploadPage = () => {
                 </div>
             </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setResults(null); setCsvData(''); setSelectedFile(null); }}>
                 <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="collections" className="font-hindi">
-                        <Milk className="w-4 h-4 mr-2" />
-                        {texts.collections}
+                    <TabsTrigger value="collections" className="font-hindi" data-testid="bulk-collections-tab">
+                        <Milk className="w-4 h-4 mr-2" />{texts.collections}
                     </TabsTrigger>
-                    <TabsTrigger value="farmers" className="font-hindi">
-                        <Users className="w-4 h-4 mr-2" />
-                        {texts.farmers}
+                    <TabsTrigger value="farmers" className="font-hindi" data-testid="bulk-farmers-tab">
+                        <Users className="w-4 h-4 mr-2" />{texts.farmers}
                     </TabsTrigger>
                 </TabsList>
-
-                <TabsContent value="collections" className="mt-4 space-y-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="font-heading flex items-center gap-2">
-                                <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
-                                {texts.collections}
-                            </CardTitle>
-                            <CardDescription>{texts.collectionFormat}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <Button variant="outline" onClick={() => downloadTemplate('collections')}>
-                                <Download className="w-4 h-4 mr-2" />
-                                {texts.downloadTemplate}
-                            </Button>
-                            
-                            <div className="space-y-2">
-                                <p className="text-sm text-zinc-600">{texts.instructions}</p>
-                                <Textarea
-                                    value={csvData}
-                                    onChange={(e) => setCsvData(e.target.value)}
-                                    placeholder="farmer_phone,shift,quantity,fat,snf
-9876543210,morning,5.5,4.2,8.5
-9876543211,evening,6.0,4.5,8.7"
-                                    rows={8}
-                                    className="font-mono text-sm"
-                                />
-                            </div>
-
-                            <Button 
-                                onClick={handleUpload} 
-                                className="w-full h-12 bg-emerald-700 hover:bg-emerald-800"
-                                disabled={uploading}
-                            >
-                                {uploading ? (
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                ) : (
-                                    <>
-                                        <Upload className="w-5 h-5 mr-2" />
-                                        {texts.upload}
-                                    </>
-                                )}
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="farmers" className="mt-4 space-y-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="font-heading flex items-center gap-2">
-                                <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
-                                {texts.farmers}
-                            </CardTitle>
-                            <CardDescription>{texts.farmerFormat}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <Button variant="outline" onClick={() => downloadTemplate('farmers')}>
-                                <Download className="w-4 h-4 mr-2" />
-                                {texts.downloadTemplate}
-                            </Button>
-                            
-                            <div className="space-y-2">
-                                <p className="text-sm text-zinc-600">{texts.instructions}</p>
-                                <Textarea
-                                    value={csvData}
-                                    onChange={(e) => setCsvData(e.target.value)}
-                                    placeholder="name,phone,village,address,bank_account,ifsc_code,aadhar_number
-रामलाल,9876543210,गोकुलपुर,मुख्य बाजार,1234567890,SBIN0001234,123456789012"
-                                    rows={8}
-                                    className="font-mono text-sm"
-                                />
-                            </div>
-
-                            <Button 
-                                onClick={handleUpload} 
-                                className="w-full h-12 bg-emerald-700 hover:bg-emerald-800"
-                                disabled={uploading}
-                            >
-                                {uploading ? (
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                ) : (
-                                    <>
-                                        <Upload className="w-5 h-5 mr-2" />
-                                        {texts.upload}
-                                    </>
-                                )}
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+                <TabsContent value="collections" className="mt-4 space-y-4">{renderUploadContent('collections')}</TabsContent>
+                <TabsContent value="farmers" className="mt-4 space-y-4">{renderUploadContent('farmers')}</TabsContent>
             </Tabs>
 
-            {/* Results */}
             {results && (
-                <Card className={results.failed > 0 ? "border-orange-200" : "border-emerald-200"}>
+                <Card className={results.failed > 0 ? "border-orange-200" : "border-emerald-200"} data-testid="upload-results">
                     <CardHeader>
-                        <CardTitle className="text-base">
-                            {language === 'hi' ? 'अपलोड परिणाम' : 'Upload Results'}
-                        </CardTitle>
+                        <CardTitle className="text-base">{language === 'hi' ? 'अपलोड परिणाम' : 'Upload Results'}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="flex items-center gap-6 mb-4">
@@ -300,7 +293,6 @@ const BulkUploadPage = () => {
                                 </div>
                             )}
                         </div>
-                        
                         {results.errors && results.errors.length > 0 && (
                             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                                 <div className="flex items-center gap-2 text-red-700 mb-2">
@@ -308,9 +300,7 @@ const BulkUploadPage = () => {
                                     <span className="font-semibold">{texts.errors}:</span>
                                 </div>
                                 <ul className="text-sm text-red-600 space-y-1 max-h-40 overflow-y-auto">
-                                    {results.errors.map((err, idx) => (
-                                        <li key={idx}>• {err}</li>
-                                    ))}
+                                    {results.errors.map((err, idx) => (<li key={idx}>&#x2022; {err}</li>))}
                                 </ul>
                             </div>
                         )}
