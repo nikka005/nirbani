@@ -186,31 +186,6 @@ const MainLayout = () => {
                     </Button>
                 </div>
             </header>
-                        <Milk className="w-4 h-4 text-white" />
-                    </div>
-                    <span className="font-heading font-bold text-zinc-900">Nirbani</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={toggleLanguage}
-                        data-testid="mobile-toggle-language"
-                        className="text-xs"
-                    >
-                        {language === 'hi' ? 'EN' : 'हिं'}
-                    </Button>
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={logout}
-                        data-testid="mobile-logout"
-                        className="text-zinc-600"
-                    >
-                        <LogOut className="w-4 h-4" />
-                    </Button>
-                </div>
-            </header>
 
             {/* Main Content */}
             <main className="pt-14 md:pt-0 min-h-screen">
