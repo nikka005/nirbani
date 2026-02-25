@@ -231,9 +231,21 @@ const CollectionPage = () => {
                                         {collection.farmer_name.charAt(0)}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="font-semibold text-zinc-900 truncate">
-                                            {collection.farmer_name}
-                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="font-semibold text-zinc-900 truncate">
+                                                {collection.farmer_name}
+                                            </p>
+                                            <span className={cn(
+                                                "px-1.5 py-0.5 rounded text-[9px] font-bold uppercase",
+                                                collection.milk_type === 'buffalo' ? "bg-amber-100 text-amber-700" :
+                                                collection.milk_type === 'mix' ? "bg-purple-100 text-purple-700" :
+                                                "bg-blue-100 text-blue-700"
+                                            )}>
+                                                {collection.milk_type === 'buffalo' ? (language === 'hi' ? 'भैंस' : 'BUF') :
+                                                 collection.milk_type === 'mix' ? (language === 'hi' ? 'मिक्स' : 'MIX') :
+                                                 (language === 'hi' ? 'गाय' : 'COW')}
+                                            </span>
+                                        </div>
                                         <div className="flex items-center gap-3 text-sm text-zinc-500">
                                             <span>{formatNumber(collection.quantity)} L</span>
                                             <span>•</span>
