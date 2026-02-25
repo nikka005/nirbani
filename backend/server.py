@@ -191,6 +191,14 @@ class CustomerCreate(BaseModel):
     customer_type: str = "retail"  # retail, wholesale
     gst_number: Optional[str] = ""
 
+class CustomerUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    customer_type: Optional[str] = None
+    gst_number: Optional[str] = None
+
+
 class CustomerResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str
