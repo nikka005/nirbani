@@ -91,10 +91,16 @@ const CollectionPage = () => {
     const buffaloMilk = allCollections.filter(c => c.milk_type === 'buffalo').reduce((s, c) => s + c.quantity, 0);
     const mixMilk = allCollections.filter(c => c.milk_type === 'mix').reduce((s, c) => s + c.quantity, 0);
 
+    const hasFixedRate = selectedFarmer?.fixed_rate && selectedFarmer.fixed_rate > 0;
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.farmer_id || !formData.quantity || !formData.fat) {
+        if (!formData.farmer_id || !formData.quantity) {
             toast.error(t('Fill all fields', 'सभी फ़ील्ड भरें'));
+            return;
+        }
+        if (!hasFixedRate && !formData.fat) {
+            toast.error(t('Fat % is required', 'फैट % आवश्यक है'));
             return;
         }
         setSubmitting(true);
@@ -103,8 +109,8 @@ const CollectionPage = () => {
                 farmer_id: formData.farmer_id,
                 shift: formShift,
                 quantity: parseFloat(formData.quantity),
-                fat: parseFloat(formData.fat),
-                snf: formData.snf ? parseFloat(formData.snf) : null,
+                fat: hasFixedRate ? 0 : parseFloat(formData.fat),
+                snf: hasFixedRate ? 0 : (formData.snf ? parseFloat(formData.snf) : null),
             });
             setAllCollections(prev => [response.data, ...prev]);
             setFormData({ farmer_id: '', quantity: '', fat: '', snf: '' });
