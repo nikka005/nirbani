@@ -1034,6 +1034,261 @@ async def get_today_sales(current_user: dict = Depends(get_current_user)):
         "sales": sales
     }
 
+# ==================== CUSTOMER BILLING ROUTES ====================
+
+@api_router.get("/customers/{customer_id}/sales")
+async def get_customer_sales(
+    customer_id: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all sales for a customer"""
+    customer = await db.customers.find_one({"id": customer_id}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    query = {"customer_id": customer_id}
+    if start_date:
+        query.setdefault("date", {})["$gte"] = start_date
+    if end_date:
+        query.setdefault("date", {})["$lte"] = end_date
+    
+    sales = await db.sales.find(query, {"_id": 0}).sort("date", -1).to_list(1000)
+    payments = await db.payments.find({"farmer_id": customer_id}, {"_id": 0}).sort("date", -1).to_list(1000)
+    
+    return {
+        "customer": customer,
+        "sales": sales,
+        "payments": payments,
+        "summary": {
+            "total_purchase": customer.get("total_purchase", 0),
+            "total_paid": customer.get("total_paid", 0),
+            "balance": customer.get("balance", 0),
+        }
+    }
+
+@api_router.post("/customers/{customer_id}/payment")
+async def record_customer_payment(
+    customer_id: str,
+    payment: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Record a payment from a customer"""
+    customer = await db.customers.find_one({"id": customer_id}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    amount = float(payment.get("amount", 0))
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="Amount must be positive")
+    
+    payment_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+    
+    payment_doc = {
+        "id": payment_id,
+        "farmer_id": customer_id,
+        "farmer_name": customer["name"],
+        "amount": amount,
+        "payment_mode": payment.get("payment_mode", "cash"),
+        "payment_type": "payment",
+        "notes": payment.get("notes", ""),
+        "date": now.strftime("%Y-%m-%d"),
+        "created_at": now.isoformat()
+    }
+    
+    await db.payments.insert_one(payment_doc)
+    await db.customers.update_one(
+        {"id": customer_id},
+        {"$inc": {"total_paid": amount, "balance": -amount}}
+    )
+    
+    updated = await db.customers.find_one({"id": customer_id}, {"_id": 0})
+    return {"payment": payment_doc, "customer": updated}
+
+@api_router.get("/bills/customer/thermal/{customer_id}", response_class=HTMLResponse)
+async def customer_thermal_bill(customer_id: str, start_date: Optional[str] = None, end_date: Optional[str] = None):
+    """Generate thermal printer bill for customer"""
+    customer = await db.customers.find_one({"id": customer_id}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    if not end_date:
+        end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    if not start_date:
+        start_date = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%d")
+    
+    sales = await db.sales.find(
+        {"customer_id": customer_id, "date": {"$gte": start_date, "$lte": end_date}}, {"_id": 0}
+    ).sort("date", 1).to_list(1000)
+    
+    payments = await db.payments.find(
+        {"farmer_id": customer_id, "date": {"$gte": start_date, "$lte": end_date}}, {"_id": 0}
+    ).sort("date", 1).to_list(1000)
+    
+    settings = await db.settings.find_one({"type": "dairy_info"}, {"_id": 0}) or {}
+    dairy_name = settings.get("dairy_name", "Nirbani Dairy")
+    dairy_phone = settings.get("phone", "")
+    
+    total_amount = sum(s["amount"] for s in sales)
+    total_paid = sum(p["amount"] for p in payments)
+    balance = total_amount - total_paid
+    
+    rows = ""
+    for s in sales:
+        rows += f"<tr><td>{s['date'][5:]}</td><td>{s['product']}</td><td>{s['quantity']}</td><td>{s['rate']}</td><td style='text-align:right'>{s['amount']:.0f}</td></tr>\n"
+    
+    pay_rows = ""
+    for p in payments:
+        pay_rows += f"<tr><td>{p['date'][5:]}</td><td>{p['payment_mode']}</td><td style='text-align:right'>{p['amount']:.0f}</td></tr>\n"
+    
+    ctype = "Wholesale" if customer.get("customer_type") == "wholesale" else "Retail"
+    
+    html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=58mm">
+<style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{font-family:'Courier New',monospace;font-size:11px;width:58mm;padding:2mm;color:#000}}
+.center{{text-align:center}}.bold{{font-weight:bold}}.line{{border-top:1px dashed #000;margin:3px 0}}
+table{{width:100%;border-collapse:collapse}}
+td,th{{padding:1px 2px;font-size:10px;vertical-align:top}}
+th{{text-align:left;border-bottom:1px solid #000}}
+.right{{text-align:right}}.big{{font-size:14px}}
+@media print{{@page{{size:58mm auto;margin:0}}body{{width:58mm}}}}
+</style></head><body>
+<div class="center bold big">{dairy_name}</div>
+<div class="center" style="font-size:9px">{dairy_phone}</div>
+<div class="line"></div>
+<div class="bold">{customer['name']} ({ctype})</div>
+<div style="font-size:9px">Ph: {customer['phone']}</div>
+{f'<div style="font-size:9px">GST: {customer["gst_number"]}</div>' if customer.get("gst_number") else ''}
+<div style="font-size:9px">{start_date} to {end_date}</div>
+<div class="line"></div>
+<table><tr><th>Date</th><th>Item</th><th>Qty</th><th>Rate</th><th class="right">Amt</th></tr>
+{rows}</table>
+<div class="line"></div>
+<table>
+<tr><td class="bold">Total:</td><td class="right bold">Rs.{total_amount:.0f}</td></tr>
+<tr><td class="bold">Paid:</td><td class="right bold">Rs.{total_paid:.0f}</td></tr>
+<tr><td class="bold">Balance:</td><td class="right bold">Rs.{balance:.0f}</td></tr>
+</table>
+{f'<div class="line"></div><div class="bold" style="font-size:9px">Payments:</div><table><tr><th>Date</th><th>Mode</th><th class="right">Amt</th></tr>{pay_rows}</table>' if payments else ''}
+<div class="line"></div>
+<div class="center" style="font-size:9px;margin-top:3px">Thank You / धन्यवाद</div>
+<div class="center" style="font-size:8px">Printed: {datetime.now(timezone.utc).strftime("%d-%m-%Y %H:%M")}</div>
+</body></html>"""
+    return HTMLResponse(content=html)
+
+@api_router.get("/bills/customer/a4/{customer_id}", response_class=HTMLResponse)
+async def customer_a4_invoice(customer_id: str, start_date: Optional[str] = None, end_date: Optional[str] = None):
+    """Generate A4 invoice for customer"""
+    customer = await db.customers.find_one({"id": customer_id}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    if not end_date:
+        end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    if not start_date:
+        start_date = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%d")
+    
+    sales = await db.sales.find(
+        {"customer_id": customer_id, "date": {"$gte": start_date, "$lte": end_date}}, {"_id": 0}
+    ).sort("date", 1).to_list(1000)
+    
+    payments = await db.payments.find(
+        {"farmer_id": customer_id, "date": {"$gte": start_date, "$lte": end_date}}, {"_id": 0}
+    ).sort("date", 1).to_list(1000)
+    
+    settings = await db.settings.find_one({"type": "dairy_info"}, {"_id": 0}) or {}
+    dairy_name = settings.get("dairy_name", "Nirbani Dairy")
+    dairy_phone = settings.get("phone", "")
+    dairy_address = settings.get("address", "")
+    
+    total_amount = sum(s["amount"] for s in sales)
+    total_paid = sum(p["amount"] for p in payments)
+    balance = total_amount - total_paid
+    ctype = "Wholesale / थोक" if customer.get("customer_type") == "wholesale" else "Retail / खुदरा"
+    invoice_no = f"CINV-{customer_id[:8].upper()}-{datetime.now(timezone.utc).strftime('%Y%m%d')}"
+    
+    sale_rows = ""
+    for i, s in enumerate(sales, 1):
+        sale_rows += f"<tr><td>{i}</td><td>{s['date']}</td><td>{s['product'].title()}</td><td>{s['quantity']}</td><td>{s['rate']:.2f}</td><td class='right'>{s['amount']:.2f}</td></tr>"
+    
+    pay_rows = ""
+    for p in payments:
+        pay_rows += f"<tr><td>{p['date']}</td><td>{p.get('payment_mode','cash').upper()}</td><td>{p.get('notes','')}</td><td class='right'>{p['amount']:.2f}</td></tr>"
+    
+    html = f"""<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{font-family:'Segoe UI',Arial,sans-serif;font-size:12px;color:#1a1a1a;padding:15mm 20mm;max-width:210mm}}
+.header{{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #15803d;padding-bottom:12px;margin-bottom:15px}}
+.dairy-name{{font-size:24px;font-weight:bold;color:#15803d}}.dairy-info{{font-size:10px;color:#666;margin-top:4px}}
+.invoice-box{{text-align:right}}.invoice-title{{font-size:20px;color:#15803d;font-weight:bold}}.invoice-no{{font-size:11px;color:#666;margin-top:2px}}
+.info-grid{{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px}}
+.info-card{{background:#f8faf8;border:1px solid #e5e7eb;border-radius:6px;padding:10px}}
+.info-label{{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:0.5px}}.info-value{{font-size:13px;font-weight:600;margin-top:2px}}
+table{{width:100%;border-collapse:collapse;margin-bottom:15px}}
+th{{background:#15803d;color:white;padding:6px 8px;text-align:left;font-size:10px;text-transform:uppercase}}
+td{{padding:5px 8px;border-bottom:1px solid #eee;font-size:11px}}.right{{text-align:right}}
+tr:nth-child(even){{background:#f9fafb}}
+.summary-grid{{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:15px 0}}
+.summary-box{{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:10px;text-align:center}}
+.summary-box.due{{background:#fef2f2;border-color:#fecaca}}
+.summary-label{{font-size:9px;color:#666;text-transform:uppercase}}.summary-value{{font-size:18px;font-weight:bold;color:#15803d;margin-top:2px}}
+.summary-box.due .summary-value{{color:#dc2626}}
+.footer{{margin-top:20px;border-top:2px solid #15803d;padding-top:10px;display:flex;justify-content:space-between;font-size:10px;color:#666}}
+.sig-box{{border-top:1px solid #333;width:150px;text-align:center;padding-top:5px;margin-top:40px;font-size:10px}}
+h3{{color:#15803d;font-size:13px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #d1fae5}}
+@media print{{@page{{size:A4;margin:10mm}}body{{padding:0}}}}
+</style></head><body>
+<div class="header">
+  <div><div class="dairy-name">{dairy_name}</div><div class="dairy-info">{dairy_address}<br>{dairy_phone}</div></div>
+  <div class="invoice-box"><div class="invoice-title">CUSTOMER INVOICE / ग्राहक बिल</div><div class="invoice-no">{invoice_no}</div><div class="invoice-no">{start_date} to {end_date}</div></div>
+</div>
+<div class="info-grid">
+  <div class="info-card"><div class="info-label">Customer / ग्राहक</div><div class="info-value">{customer['name']}</div><div style="font-size:10px;color:#666">Ph: {customer['phone']} | {ctype}</div></div>
+  <div class="info-card"><div class="info-label">Address / पता</div><div class="info-value">{customer.get('address','N/A')}</div>{f'<div style="font-size:10px;color:#666">GST: {customer["gst_number"]}</div>' if customer.get("gst_number") else ''}</div>
+</div>
+<div class="summary-grid">
+  <div class="summary-box"><div class="summary-label">Total Purchase / कुल खरीद</div><div class="summary-value">₹{total_amount:.0f}</div></div>
+  <div class="summary-box"><div class="summary-label">Total Paid / कुल भुगतान</div><div class="summary-value">₹{total_paid:.0f}</div></div>
+  <div class="summary-box {'due' if balance > 0 else ''}"><div class="summary-label">Balance / बकाया</div><div class="summary-value">₹{balance:.0f}</div></div>
+</div>
+<h3>Sales Details / बिक्री विवरण</h3>
+<table><tr><th>#</th><th>Date</th><th>Product</th><th>Qty</th><th>Rate ₹</th><th class="right">Amount ₹</th></tr>
+{sale_rows}
+<tr style="background:#15803d;color:white;font-weight:bold"><td colspan="5">TOTAL</td><td class="right">₹{total_amount:.2f}</td></tr>
+</table>
+{f'<h3>Payments / भुगतान</h3><table><tr><th>Date</th><th>Mode</th><th>Notes</th><th class="right">Amount ₹</th></tr>{pay_rows}<tr style="background:#15803d;color:white;font-weight:bold"><td colspan="3">TOTAL PAID</td><td class="right">₹{total_paid:.2f}</td></tr></table>' if payments else ''}
+<div style="display:flex;justify-content:flex-end;gap:40px;margin-top:30px">
+  <div class="sig-box">Dairy Stamp / डेयरी मुहर</div>
+  <div class="sig-box">Authorized Signature / हस्ताक्षर</div>
+</div>
+<div class="footer"><div>Generated: {datetime.now(timezone.utc).strftime("%d-%m-%Y %H:%M UTC")}</div><div>{dairy_name} | {dairy_phone}</div></div>
+</body></html>"""
+    return HTMLResponse(content=html)
+
+@api_router.get("/share/customer-bill/{customer_id}")
+async def share_customer_bill(customer_id: str, current_user: dict = Depends(get_current_user)):
+    """Generate WhatsApp share link for customer bill"""
+    customer = await db.customers.find_one({"id": customer_id}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    settings = await db.settings.find_one({"type": "dairy_info"}, {"_id": 0}) or {}
+    dairy_name = settings.get("dairy_name", "Nirbani Dairy")
+    
+    msg = f"*{dairy_name}*\nCustomer: {customer['name']}\nTotal Purchase: ₹{customer.get('total_purchase', 0):.0f}\nPaid: ₹{customer.get('total_paid', 0):.0f}\nBalance: ₹{customer.get('balance', 0):.0f}\nThank you!"
+    
+    import urllib.parse
+    phone = customer["phone"].replace("+", "").replace(" ", "")
+    if not phone.startswith("91"):
+        phone = "91" + phone
+    
+    whatsapp_link = f"https://wa.me/{phone}?text={urllib.parse.quote(msg)}"
+    return {"whatsapp_link": whatsapp_link, "message": msg}
+
 # ==================== INVENTORY/PRODUCT ROUTES ====================
 
 @api_router.post("/products", response_model=ProductResponse)
