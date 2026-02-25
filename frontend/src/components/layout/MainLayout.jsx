@@ -48,6 +48,21 @@ const navItems = [
         label: { en: 'Payments', hi: 'भुगतान' } 
     },
     { 
+        path: '/sales', 
+        icon: ShoppingBag, 
+        label: { en: 'Sales', hi: 'बिक्री' } 
+    },
+    { 
+        path: '/inventory', 
+        icon: Package, 
+        label: { en: 'Inventory', hi: 'इन्वेंटरी' } 
+    },
+    { 
+        path: '/expenses', 
+        icon: Receipt, 
+        label: { en: 'Expenses', hi: 'खर्च' } 
+    },
+    { 
         path: '/reports', 
         icon: FileText, 
         label: { en: 'Reports', hi: 'रिपोर्ट' } 
