@@ -155,19 +155,19 @@ const CollectionPage = () => {
     return (
         <div className="p-4 md:p-8 space-y-6 max-w-5xl mx-auto">
             {/* Header */}
-            <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 flex-wrap">
                 <div>
-                    <h1 className="font-heading text-2xl font-bold text-zinc-900">{t('Milk Collection', 'दूध संग्रह')}</h1>
-                    <p className="text-sm text-muted-foreground">{t('Daily milk collection dashboard', 'दैनिक दूध संग्रह डैशबोर्ड')}</p>
+                    <h1 className="font-heading text-xl sm:text-2xl font-bold text-zinc-900">{t('Milk Collection', 'दूध संग्रह')}</h1>
+                    <p className="text-xs sm:text-sm text-muted-foreground">{t('Daily milk collection dashboard', 'दैनिक दूध संग्रह डैशबोर्ड')}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                     <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} 
-                        data-testid="collection-date-picker" className="h-10 w-auto" />
-                    <Button variant="outline" size="sm" onClick={handleExport} data-testid="export-collections-btn">
-                        <Download className="w-4 h-4 mr-1" />Excel
+                        data-testid="collection-date-picker" className="h-9 w-auto text-sm" />
+                    <Button variant="outline" size="sm" onClick={handleExport} data-testid="export-collections-btn" className="h-9">
+                        <Download className="w-4 h-4 mr-1" />CSV
                     </Button>
-                    <Button onClick={() => setShowAddDialog(true)} data-testid="add-collection-btn" className="bg-emerald-700 hover:bg-emerald-800">
-                        <Plus className="w-4 h-4 mr-2" />{t('New Entry', 'नई प्रविष्टि')}
+                    <Button onClick={() => setShowAddDialog(true)} data-testid="add-collection-btn" className="bg-emerald-700 hover:bg-emerald-800 h-9">
+                        <Plus className="w-4 h-4 mr-1" /><span className="hidden sm:inline">{t('New Entry', 'नई प्रविष्टि')}</span><span className="sm:hidden">{t('New', 'नया')}</span>
                     </Button>
                 </div>
             </div>
