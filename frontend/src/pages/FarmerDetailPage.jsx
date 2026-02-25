@@ -146,6 +146,46 @@ const FarmerDetailPage = () => {
         }
     };
 
+    const openEditDialog = () => {
+        if (farmer) {
+            setEditData({
+                name: farmer.name || '',
+                phone: farmer.phone || '',
+                village: farmer.village || '',
+                address: farmer.address || '',
+                bank_account: farmer.bank_account || '',
+                ifsc_code: farmer.ifsc_code || '',
+                aadhar_number: farmer.aadhar_number || '',
+                milk_type: farmer.milk_type || 'cow',
+                fixed_rate: farmer.fixed_rate || '',
+            });
+            setShowEditDialog(true);
+        }
+    };
+
+    const handleEdit = async (e) => {
+        e.preventDefault();
+        if (!editData.name || !editData.phone) {
+            toast.error(language === 'hi' ? 'नाम और फ़ोन आवश्यक है' : 'Name and phone required');
+            return;
+        }
+        setSubmitting(true);
+        try {
+            const payload = {
+                ...editData,
+                fixed_rate: editData.fixed_rate ? parseFloat(editData.fixed_rate) : null,
+            };
+            await farmerAPI.update(id, payload);
+            setShowEditDialog(false);
+            toast.success(texts.updated);
+            fetchFarmerData();
+        } catch (error) {
+            toast.error(error.response?.data?.detail || 'Error updating farmer');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     const handlePayment = async (e) => {
         e.preventDefault();
         if (!paymentData.amount || parseFloat(paymentData.amount) <= 0) {
