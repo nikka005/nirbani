@@ -13,7 +13,9 @@ import {
     Settings,
     ShoppingBag,
     Package,
-    Receipt
+    Receipt,
+    Building2,
+    Upload
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
@@ -66,6 +68,16 @@ const navItems = [
         path: '/reports', 
         icon: FileText, 
         label: { en: 'Reports', hi: 'रिपोर्ट' } 
+    },
+    { 
+        path: '/branches', 
+        icon: Building2, 
+        label: { en: 'Branches', hi: 'शाखाएँ' } 
+    },
+    { 
+        path: '/bulk-upload', 
+        icon: Upload, 
+        label: { en: 'Bulk Upload', hi: 'बल्क अपलोड' } 
     },
 ];
 
