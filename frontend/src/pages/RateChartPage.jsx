@@ -12,6 +12,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from '../components/ui/dialog';
 import {
     Table,
@@ -298,6 +299,9 @@ const RateChartPage = () => {
                             <ChartLine className="w-5 h-5 text-emerald-600" />
                             {editingChart ? (language === 'hi' ? 'चार्ट संपादित करें' : 'Edit Chart') : texts.addChart}
                         </DialogTitle>
+                        <DialogDescription className="text-sm text-muted-foreground">
+                            {language === 'hi' ? 'फैट और एसएनएफ के अनुसार दर निर्धारित करें' : 'Set rates based on fat and SNF'}
+                        </DialogDescription>
                     </DialogHeader>
 
                     <form onSubmit={handleSubmit} className="space-y-4">

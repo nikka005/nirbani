@@ -12,6 +12,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from '../components/ui/dialog';
 import { 
     Users, 
@@ -222,6 +223,9 @@ const FarmersPage = () => {
                             <Users className="w-5 h-5 text-emerald-600" />
                             {texts.addFarmer}
                         </DialogTitle>
+                        <DialogDescription className="text-sm text-muted-foreground">
+                            {language === 'hi' ? 'नए किसान की जानकारी भरें' : 'Enter new farmer details'}
+                        </DialogDescription>
                     </DialogHeader>
 
                     <form onSubmit={handleSubmit} className="space-y-4">

@@ -13,6 +13,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from '../components/ui/dialog';
 import {
     Select,
@@ -362,6 +363,9 @@ const FarmerDetailPage = () => {
                             <Wallet className="w-5 h-5 text-emerald-600" />
                             {texts.makePayment}
                         </DialogTitle>
+                        <DialogDescription className="text-sm text-muted-foreground">
+                            {language === 'hi' ? 'किसान को भुगतान करें' : 'Record payment to farmer'}
+                        </DialogDescription>
                     </DialogHeader>
 
                     <form onSubmit={handlePayment} className="space-y-4">

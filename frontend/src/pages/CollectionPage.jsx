@@ -18,6 +18,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from '../components/ui/dialog';
 import { 
     Milk, 
@@ -273,6 +274,9 @@ const CollectionPage = () => {
                             <Milk className="w-5 h-5 text-emerald-600" />
                             {texts.addCollection}
                         </DialogTitle>
+                        <DialogDescription className="text-sm text-muted-foreground">
+                            {language === 'hi' ? 'किसान का दूध दर्ज करें' : 'Record farmer milk collection'}
+                        </DialogDescription>
                     </DialogHeader>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
