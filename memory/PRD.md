@@ -39,6 +39,7 @@ Complete Dairy ERP system for Indian dairy businesses handling milk collection, 
 - Added Edit button + dialog to FarmerDetailPage (all fields editable)
 - Added Edit button + dialog to CustomerDetailPage (name, phone, address, type, GST)
 - Added PUT /api/customers/{customer_id} backend endpoint
+- Fixed collection form: When farmer has fixed rate, Fat/SNF fields are hidden and fixed rate + estimated amount is shown instead
 - All tests passing (100% backend, 100% frontend)
 
 ## Key API Endpoints
