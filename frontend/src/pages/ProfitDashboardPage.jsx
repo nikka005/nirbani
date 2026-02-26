@@ -41,12 +41,17 @@ const ProfitDashboardPage = () => {
 
     if (loading) return <div className="flex items-center justify-center h-96"><Loader2 className="w-8 h-8 animate-spin text-emerald-600" /></div>;
 
+    const handlePrintReport = () => {
+        window.print();
+    };
+
     const p = report?.profit || {};
     const mt = report?.milk_tracking || {};
     const fa = report?.fat_analysis || {};
     const disp = report?.dispatch || {};
     const coll = report?.collection || {};
     const exp = report?.expenses || {};
+    const retail = report?.retail_sales || {};
 
     return (
         <div className="p-4 md:p-8 space-y-6 max-w-5xl mx-auto">
