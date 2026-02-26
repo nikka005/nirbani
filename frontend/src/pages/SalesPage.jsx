@@ -228,7 +228,11 @@ const SalesPage = () => {
         <div className="p-4 md:p-8 space-y-6 max-w-4xl mx-auto">
             <div className="flex items-center justify-between">
                 <h1 className="font-heading text-2xl font-bold text-zinc-900">{texts.title}</h1>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
+                    <Button variant="outline" onClick={() => setShowShopSale(true)} data-testid="shop-sale-btn"
+                        className="border-amber-300 text-amber-700 hover:bg-amber-50">
+                        <Milk className="w-4 h-4 mr-1" />{texts.shopSale}
+                    </Button>
                     <Button variant="outline" onClick={() => setShowAddCustomer(true)} data-testid="add-customer-btn">
                         <Users className="w-4 h-4 mr-2" />
                         {texts.addCustomer}
