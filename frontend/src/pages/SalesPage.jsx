@@ -185,6 +185,32 @@ const SalesPage = () => {
         }
     };
 
+    const handleShopSale = async (e) => {
+        e.preventDefault();
+        if (!shopForm.quantity || !shopForm.rate) {
+            toast.error(language === 'hi' ? 'मात्रा और दर भरें' : 'Fill quantity and rate');
+            return;
+        }
+        setSubmitting(true);
+        const token = localStorage.getItem('auth_token');
+        try {
+            await axios.post(`${BACKEND_URL}/api/sales/shop`, {
+                customer_name: shopForm.customer_name || 'Walk-in',
+                product: shopForm.product,
+                quantity: parseFloat(shopForm.quantity),
+                rate: parseFloat(shopForm.rate),
+            }, { headers: { Authorization: `Bearer ${token}` } });
+            setShopForm({ customer_name: '', product: 'milk', quantity: '', rate: '' });
+            setShowShopSale(false);
+            toast.success(language === 'hi' ? 'दुकान बिक्री दर्ज हुई!' : 'Shop sale recorded!');
+            fetchData();
+        } catch (error) {
+            toast.error(error.response?.data?.detail || 'Error');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     const filteredCustomers = customers.filter(c =>
         c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.phone.includes(searchTerm)
