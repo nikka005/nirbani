@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { 
     LayoutDashboard, Milk, Users, Wallet, FileText, LogOut, Languages,
     ChartLine, Settings, ShoppingBag, Package, Receipt, Building2, Upload,
-    Menu, X
+    Menu, X, Truck, Factory, TrendingUp
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
