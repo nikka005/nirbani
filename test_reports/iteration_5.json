@@ -1,0 +1,90 @@
+{
+    "summary": "Completed testing of Nirbani Dairy new features - Iteration 5. All 15 backend API tests passed (100%). All 5 frontend UI features verified working. Shop Sale, Print buttons, and Retail Sales in Profit Dashboard all functional.",
+    
+    "backend_issues": {
+        "critical": [],
+        "minor": []
+    },
+    
+    "frontend_issues": {
+        "ui_bugs": [],
+        "integration_issues": [],
+        "design_issues": [
+            {"screen": "Console", "issues": ["Recharts console warnings about chart width/height - cosmetic only, does not affect functionality"]}
+        ]
+    },
+    
+    "passed_tests": [
+        "POST /api/sales/shop - Basic shop sale creation",
+        "POST /api/sales/shop - Shop sale with customer name",
+        "POST /api/sales/shop - Different products (dahi, milk, etc.)",
+        "POST /api/sales/shop - Appears in today's sales list",
+        "GET /api/dispatches/{id}/bill - Returns HTML bill",
+        "GET /api/dispatches/{id}/bill - Contains FAT/SNF/Amount details",
+        "GET /api/dispatches/{id}/bill - 404 for non-existent dispatch",
+        "GET /api/dairy-plants/{id}/statement - Returns HTML statement",
+        "GET /api/dairy-plants/{id}/statement - Contains summary section",
+        "GET /api/dairy-plants/{id}/statement - Works with date range params",
+        "GET /api/dairy-plants/{id}/statement - 404 for non-existent plant",
+        "GET /api/dairy/profit-report - Includes retail_sales field",
+        "GET /api/dairy/profit-report - Complete structure with all sections",
+        "GET /api/dairy/profit-report - Works with date parameters",
+        "GET /api/dairy/profit-report - Retail sales included in calculation",
+        "UI: Shop Sale button (data-testid='shop-sale-btn') visible on Sales page",
+        "UI: Shop Sale dialog opens with customer name, product, quantity, rate inputs",
+        "UI: Submit Shop Sale button (data-testid='submit-shop-sale') works",
+        "UI: Shop sale creates entry with Walk-in/custom customer name",
+        "UI: Profit Dashboard Print button (data-testid='print-profit') visible",
+        "UI: Profit Dashboard shows Retail Sales card with amount",
+        "UI: Dairy Ledger Print Statement button (data-testid='print-statement') visible",
+        "UI: Dairy Dispatch shows print button per dispatch entry (data-testid='print-dispatch-{id}')"
+    ],
+    
+    "test_report_links": [
+        "/app/backend/tests/test_new_features_v5.py",
+        "/app/test_reports/pytest/new_features_v5_results.xml"
+    ],
+    
+    "action_items": [],
+    
+    "critical_code_review_comments": [],
+    
+    "updated_files": [
+        "/app/backend/tests/test_new_features_v5.py - New test file for shop sale, dispatch bill, dairy statement, profit report APIs"
+    ],
+    
+    "success_rate": {
+        "backend": "100% (15/15 tests passed)",
+        "frontend": "100% (all UI elements verified)"
+    },
+    
+    "test_credentials": {
+        "email": "test@test.com",
+        "password": "test123"
+    },
+    
+    "seed_data_creation": "Created shop sales during testing, created 1 dispatch entry for print button verification",
+    
+    "retest_needed": false,
+    "should_main_agent_self_test": false,
+    
+    "context_for_next_testing_agent": "All 5 new features fully working: 1) Shop Sale on Sales page (/sales) - button opens dialog for quick walk-in sales without customer account. 2) Retail Sales card on Profit Dashboard (/profit-dashboard) shows shop sale revenue. 3) Print button on Profit Dashboard for window.print(). 4) Print Statement on Dairy Ledger (/dairy-ledger) calls GET /api/dairy-plants/{id}/statement API and opens HTML in new window. 5) Print buttons on Dairy Dispatch (/dairy-dispatch) per dispatch entry call GET /api/dispatches/{id}/bill API. Note: Frontend routes use /dairy-dispatch, /dairy-ledger, /profit-dashboard (not /dairy/xxx).",
+    
+    "features_verified": {
+        "shop_sale": {
+            "button": "data-testid='shop-sale-btn' - Working",
+            "dialog_fields": ["customer_name (optional)", "product", "quantity", "rate"],
+            "submit_button": "data-testid='submit-shop-sale' - Working",
+            "backend_endpoint": "POST /api/sales/shop - Returns sale with is_shop_sale=true, customer_id='shop_walk_in'"
+        },
+        "profit_dashboard_retail_sales": {
+            "card": "Shows खुदरा बिक्री / Retail Sales with amount",
+            "api": "GET /api/dairy/profit-report returns retail_sales.total_amount, retail_sales.count"
+        },
+        "print_buttons": {
+            "profit_dashboard": "data-testid='print-profit' - Calls window.print()",
+            "dairy_ledger": "data-testid='print-statement' - Calls GET /api/dairy-plants/{id}/statement",
+            "dairy_dispatch": "data-testid='print-dispatch-{id}' - Calls GET /api/dispatches/{id}/bill"
+        }
+    }
+}
