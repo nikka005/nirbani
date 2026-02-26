@@ -3392,6 +3392,130 @@ async def fat_analysis_report(start_date: Optional[str] = None, end_date: Option
         "farmers": result,
     }
 
+# ==================== DISPATCH BILL / PRINT ROUTES ====================
+
+@api_router.get("/dispatches/{dispatch_id}/bill")
+async def get_dispatch_bill(dispatch_id: str, current_user: dict = Depends(get_current_user)):
+    dispatch = await db.dispatches.find_one({"id": dispatch_id}, {"_id": 0})
+    if not dispatch:
+        raise HTTPException(status_code=404, detail="Dispatch not found")
+    settings = await db.settings.find_one({"type": "dairy_info"}, {"_id": 0}) or {}
+    dairy_name = settings.get("dairy_name", "Nirbani Dairy")
+    dairy_phone = settings.get("phone", "")
+    dairy_address = settings.get("address", "")
+    d = dispatch
+    ded_rows = ""
+    for ded in d.get("deductions", []):
+        ded_rows += f"<tr><td>{ded['type'].replace('_',' ').title()}</td><td class='right'>-₹{ded['amount']:.2f}</td></tr>"
+    slip_section = ""
+    if d.get("slip_matched"):
+        slip_section = f"""<h3>Dairy Slip Comparison / डेयरी स्लिप तुलना</h3>
+        <table><tr><th></th><th>Your / आपका</th><th>Dairy Slip / डेयरी स्लिप</th><th>Diff / अंतर</th></tr>
+        <tr><td>FAT %</td><td>{d['avg_fat']}</td><td>{d.get('slip_fat','N/A')}</td><td>{d.get('fat_difference',0)}</td></tr>
+        <tr><td>Amount / राशि</td><td>₹{d['net_receivable']:.2f}</td><td>₹{d.get('slip_amount',0):.2f}</td><td>₹{d.get('amount_difference',0):.2f}</td></tr></table>"""
+    html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+*{{margin:0;padding:0;box-sizing:border-box}}body{{font-family:'Segoe UI',Arial,sans-serif;font-size:12px;color:#1a1a1a;padding:15mm 20mm;max-width:210mm}}
+.header{{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #15803d;padding-bottom:12px;margin-bottom:15px}}
+.dairy-name{{font-size:24px;font-weight:bold;color:#15803d}}.dairy-info{{font-size:10px;color:#666;margin-top:4px}}
+.invoice-box{{text-align:right}}.invoice-title{{font-size:20px;color:#15803d;font-weight:bold}}
+.info-grid{{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px}}
+.info-card{{background:#f8faf8;border:1px solid #e5e7eb;border-radius:6px;padding:10px}}
+.info-label{{font-size:9px;color:#888;text-transform:uppercase}}.info-value{{font-size:13px;font-weight:600;margin-top:2px}}
+table{{width:100%;border-collapse:collapse;margin-bottom:15px}}
+th{{background:#15803d;color:white;padding:6px 8px;text-align:left;font-size:10px}}td{{padding:5px 8px;border-bottom:1px solid #eee;font-size:11px}}.right{{text-align:right}}
+.summary-grid{{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin:15px 0}}
+.summary-box{{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:10px;text-align:center}}
+.summary-label{{font-size:9px;color:#666;text-transform:uppercase}}.summary-value{{font-size:18px;font-weight:bold;color:#15803d;margin-top:2px}}
+h3{{color:#15803d;font-size:13px;margin:12px 0 8px;padding-bottom:4px;border-bottom:1px solid #d1fae5}}
+.sig-box{{border-top:1px solid #333;width:150px;text-align:center;padding-top:5px;margin-top:40px;font-size:10px}}
+@media print{{@page{{size:A4;margin:10mm}}body{{padding:0}}}}
+</style></head><body>
+<div class="header"><div><div class="dairy-name">{dairy_name}</div><div class="dairy-info">{dairy_address}<br>{dairy_phone}</div></div>
+<div class="invoice-box"><div class="invoice-title">DISPATCH BILL / डिस्पैच बिल</div><div style="font-size:11px;color:#666;margin-top:2px">{d['date']}</div></div></div>
+<div class="info-grid">
+<div class="info-card"><div class="info-label">Dairy Plant / डेयरी प्लांट</div><div class="info-value">{d['dairy_plant_name']}</div></div>
+<div class="info-card"><div class="info-label">Tanker / टैंकर</div><div class="info-value">{d.get('tanker_number','N/A')}</div></div>
+</div>
+<div class="summary-grid">
+<div class="summary-box"><div class="summary-label">Quantity / मात्रा</div><div class="summary-value">{d['quantity_kg']} KG</div></div>
+<div class="summary-box"><div class="summary-label">FAT %</div><div class="summary-value">{d['avg_fat']}%</div></div>
+<div class="summary-box"><div class="summary-label">SNF %</div><div class="summary-value">{d['avg_snf']}%</div></div>
+<div class="summary-box"><div class="summary-label">Rate / दर</div><div class="summary-value">₹{d['rate_per_kg']}/KG</div></div>
+</div>
+<h3>Amount Calculation / राशि गणना</h3>
+<table><tr><td>Gross Amount / कुल राशि</td><td class="right" style="font-weight:bold">₹{d['gross_amount']:.2f}</td></tr>
+{ded_rows}
+<tr style="background:#15803d;color:white;font-weight:bold"><td>Net Receivable / शुद्ध प्राप्य</td><td class="right">₹{d['net_receivable']:.2f}</td></tr></table>
+{slip_section}
+<div style="display:flex;justify-content:flex-end;gap:40px;margin-top:30px">
+<div class="sig-box">Dairy Stamp / डेयरी मुहर</div><div class="sig-box">Signature / हस्ताक्षर</div></div>
+</body></html>"""
+    return {"html": html, "dispatch": dispatch}
+
+@api_router.get("/dairy-plants/{plant_id}/statement")
+async def get_dairy_statement(plant_id: str, start_date: Optional[str] = None, end_date: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    plant = await db.dairy_plants.find_one({"id": plant_id}, {"_id": 0})
+    if not plant:
+        raise HTTPException(status_code=404, detail="Dairy plant not found")
+    if not start_date:
+        start_date = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%d")
+    if not end_date:
+        end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    dq = {"dairy_plant_id": plant_id, "date": {"$gte": start_date, "$lte": end_date}}
+    dispatches = await db.dispatches.find(dq, {"_id": 0}).sort("date", 1).to_list(500)
+    payments = await db.dairy_payments.find(dq, {"_id": 0}).sort("date", 1).to_list(500)
+    settings = await db.settings.find_one({"type": "dairy_info"}, {"_id": 0}) or {}
+    dairy_name = settings.get("dairy_name", "Nirbani Dairy")
+    dairy_phone = settings.get("phone", "")
+    dairy_address = settings.get("address", "")
+    total_supplied = sum(d["quantity_kg"] for d in dispatches)
+    total_amount = sum(d["net_receivable"] for d in dispatches)
+    total_paid = sum(p["amount"] for p in payments)
+    balance = total_amount - total_paid
+    disp_rows = ""
+    for i, d in enumerate(dispatches, 1):
+        disp_rows += f"<tr><td>{i}</td><td>{d['date']}</td><td>{d.get('tanker_number','')}</td><td>{d['quantity_kg']}</td><td>{d['avg_fat']}%</td><td>₹{d['rate_per_kg']}</td><td class='right'>-₹{d['total_deduction']:.0f}</td><td class='right'>₹{d['net_receivable']:.2f}</td></tr>"
+    pay_rows = ""
+    for p in payments:
+        pay_rows += f"<tr><td>{p['date']}</td><td>{p['payment_mode'].upper()}</td><td>{p.get('reference_number','')}</td><td class='right'>₹{p['amount']:.2f}</td></tr>"
+    html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+*{{margin:0;padding:0;box-sizing:border-box}}body{{font-family:'Segoe UI',Arial,sans-serif;font-size:12px;color:#1a1a1a;padding:15mm 20mm;max-width:210mm}}
+.header{{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #15803d;padding-bottom:12px;margin-bottom:15px}}
+.dairy-name{{font-size:24px;font-weight:bold;color:#15803d}}.dairy-info{{font-size:10px;color:#666;margin-top:4px}}
+.invoice-box{{text-align:right}}.invoice-title{{font-size:20px;color:#15803d;font-weight:bold}}
+.info-card{{background:#f8faf8;border:1px solid #e5e7eb;border-radius:6px;padding:10px;margin-bottom:15px}}
+.info-label{{font-size:9px;color:#888;text-transform:uppercase}}.info-value{{font-size:13px;font-weight:600;margin-top:2px}}
+table{{width:100%;border-collapse:collapse;margin-bottom:15px}}
+th{{background:#15803d;color:white;padding:6px 8px;text-align:left;font-size:10px}}td{{padding:5px 8px;border-bottom:1px solid #eee;font-size:11px}}.right{{text-align:right}}
+.summary-grid{{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin:15px 0}}
+.summary-box{{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:10px;text-align:center}}
+.summary-box.due{{background:#fef2f2;border-color:#fecaca}}
+.summary-label{{font-size:9px;color:#666;text-transform:uppercase}}.summary-value{{font-size:18px;font-weight:bold;color:#15803d;margin-top:2px}}
+.summary-box.due .summary-value{{color:#dc2626}}
+h3{{color:#15803d;font-size:13px;margin:12px 0 8px;padding-bottom:4px;border-bottom:1px solid #d1fae5}}
+.sig-box{{border-top:1px solid #333;width:150px;text-align:center;padding-top:5px;margin-top:40px;font-size:10px}}
+@media print{{@page{{size:A4;margin:10mm}}body{{padding:0}}}}
+</style></head><body>
+<div class="header"><div><div class="dairy-name">{dairy_name}</div><div class="dairy-info">{dairy_address}<br>{dairy_phone}</div></div>
+<div class="invoice-box"><div class="invoice-title">DAIRY STATEMENT / डेयरी विवरण</div><div style="font-size:11px;color:#666;margin-top:2px">{start_date} to {end_date}</div></div></div>
+<div class="info-card"><div class="info-label">Dairy Plant / डेयरी प्लांट</div><div class="info-value">{plant['name']}</div>
+<div style="font-size:10px;color:#666">{plant.get('address','')}{f" | Ph: {plant.get('phone','')}" if plant.get('phone') else ''}</div></div>
+<div class="summary-grid">
+<div class="summary-box"><div class="summary-label">Total Supplied / कुल आपूर्ति</div><div class="summary-value">{total_supplied:.1f} KG</div></div>
+<div class="summary-box"><div class="summary-label">Total Amount / कुल राशि</div><div class="summary-value">₹{total_amount:.0f}</div></div>
+<div class="summary-box"><div class="summary-label">Total Paid / कुल भुगतान</div><div class="summary-value">₹{total_paid:.0f}</div></div>
+<div class="summary-box {'due' if balance > 0 else ''}"><div class="summary-label">Balance / बकाया</div><div class="summary-value">₹{balance:.0f}</div></div>
+</div>
+<h3>Dispatch Details / डिस्पैच विवरण</h3>
+<table><tr><th>#</th><th>Date</th><th>Tanker</th><th>Qty KG</th><th>FAT</th><th>Rate</th><th class="right">Deductions</th><th class="right">Net ₹</th></tr>
+{disp_rows}
+<tr style="background:#15803d;color:white;font-weight:bold"><td colspan="3">TOTAL</td><td>{total_supplied:.1f}</td><td></td><td></td><td></td><td class="right">₹{total_amount:.2f}</td></tr></table>
+{f'<h3>Payments / भुगतान</h3><table><tr><th>Date</th><th>Mode</th><th>Reference</th><th class="right">Amount ₹</th></tr>{pay_rows}<tr style="background:#15803d;color:white;font-weight:bold"><td colspan="3">TOTAL PAID</td><td class="right">₹{total_paid:.2f}</td></tr></table>' if payments else ''}
+<div style="display:flex;justify-content:flex-end;gap:40px;margin-top:30px">
+<div class="sig-box">Dairy Stamp / डेयरी मुहर</div><div class="sig-box">Signature / हस्ताक्षर</div></div>
+</body></html>"""
+    return {"html": html}
+
 # ==================== HEALTH CHECK ====================
 
 @api_router.get("/")
