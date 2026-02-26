@@ -65,6 +65,9 @@ const ProfitDashboardPage = () => {
                     <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-9 w-auto text-sm" data-testid="profit-start-date" />
                     <span className="text-zinc-400">-</span>
                     <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-9 w-auto text-sm" data-testid="profit-end-date" />
+                    <Button variant="outline" onClick={handlePrintReport} data-testid="print-profit" className="h-9">
+                        <Printer className="w-4 h-4 mr-1" />{t('Print', 'प्रिंट')}
+                    </Button>
                 </div>
             </div>
 
