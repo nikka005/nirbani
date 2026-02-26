@@ -326,6 +326,9 @@ const DairyDispatchPage = () => {
                                                 <p className="text-xs text-zinc-400 line-through">{formatCurrency(d.gross_amount)}</p>
                                             )}
                                         </div>
+                                        <Button variant="ghost" size="icon" onClick={() => handlePrintDispatch(d.id)} className="text-zinc-400 hover:text-emerald-600 shrink-0" data-testid={`print-dispatch-${d.id}`}>
+                                            <Printer className="w-4 h-4" />
+                                        </Button>
                                         <Button variant="ghost" size="icon" onClick={() => handleDeleteDispatch(d.id)} className="text-zinc-300 hover:text-red-500 shrink-0">
                                             <Trash2 className="w-4 h-4" />
                                         </Button>
