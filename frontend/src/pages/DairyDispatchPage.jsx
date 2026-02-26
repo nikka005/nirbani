@@ -165,6 +165,16 @@ const DairyDispatchPage = () => {
         } catch (error) { toast.error('Error'); }
     };
 
+    const handlePrintDispatch = async (id) => {
+        try {
+            const res = await dispatchAPI.getBill(id);
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(res.data.html);
+            printWindow.document.close();
+            printWindow.print();
+        } catch (error) { toast.error(t('Print error', 'प्रिंट त्रुटि')); }
+    };
+
     const addDeduction = () => setDeductions(prev => [...prev, { type: 'transport', amount: 0, notes: '' }]);
     const removeDeduction = (idx) => setDeductions(prev => prev.filter((_, i) => i !== idx));
     const updateDeduction = (idx, field, value) => setDeductions(prev => prev.map((d, i) => i === idx ? { ...d, [field]: field === 'amount' ? parseFloat(value || 0) : value } : d));
