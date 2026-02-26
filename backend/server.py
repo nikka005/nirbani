@@ -3280,9 +3280,17 @@ async def dairy_profit_report(date: Optional[str] = None, start_date: Optional[s
     # Dispatch deductions breakdown
     total_dispatch_deductions = sum(d.get("total_deduction", 0) for d in dispatches)
 
-    # Calculate profits
+    # Get retail/shop sales
+    sales_query = {"date": {"$gte": start_date, "$lte": end_date}}
+    sales = await db.sales.find(sales_query, {"_id": 0}).to_list(5000)
+    total_retail_sales = sum(s.get("amount", 0) for s in sales)
+    retail_milk_sales = sum(s.get("amount", 0) for s in sales if s.get("product") == "milk")
+    retail_other_sales = total_retail_sales - retail_milk_sales
+
+    # Calculate profits (include retail sales)
+    total_income = total_dispatch_amount + total_retail_sales
     gross_margin_per_unit = round(avg_selling_rate - avg_buying_rate, 2)
-    gross_profit = round(total_dispatch_amount - total_farmer_amount, 2)
+    gross_profit = round(total_income - total_farmer_amount, 2)
     net_profit = round(gross_profit - total_expenses, 2)
 
     return {
@@ -3304,6 +3312,12 @@ async def dairy_profit_report(date: Optional[str] = None, start_date: Optional[s
             "avg_snf": avg_collection_snf,
             "count": len(collections),
         },
+        "retail_sales": {
+            "total_amount": total_retail_sales,
+            "milk_sales": retail_milk_sales,
+            "other_sales": retail_other_sales,
+            "count": len(sales),
+        },
         "milk_tracking": {
             "collected_kg": total_collection_kg,
             "dispatched_kg": total_dispatch_kg,
@@ -3321,6 +3335,7 @@ async def dairy_profit_report(date: Optional[str] = None, start_date: Optional[s
             "by_category": expense_by_category,
         },
         "profit": {
+            "total_income": total_income,
             "gross_margin_per_unit": gross_margin_per_unit,
             "gross_profit": gross_profit,
             "net_profit": net_profit,
