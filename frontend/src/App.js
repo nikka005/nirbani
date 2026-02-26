@@ -20,6 +20,9 @@ import ExpensesPage from './pages/ExpensesPage';
 import BranchesPage from './pages/BranchesPage';
 import BulkUploadPage from './pages/BulkUploadPage';
 import CustomerDetailPage from './pages/CustomerDetailPage';
+import DairyDispatchPage from './pages/DairyDispatchPage';
+import DairyLedgerPage from './pages/DairyLedgerPage';
+import ProfitDashboardPage from './pages/ProfitDashboardPage';
 
 // Layout
 import MainLayout from './components/layout/MainLayout';
@@ -71,6 +74,9 @@ const AppRoutes = () => {
                 <Route path="expenses" element={<ExpensesPage />} />
                 <Route path="branches" element={<BranchesPage />} />
                 <Route path="bulk-upload" element={<BulkUploadPage />} />
+                <Route path="dairy-dispatch" element={<DairyDispatchPage />} />
+                <Route path="dairy-ledger" element={<DairyLedgerPage />} />
+                <Route path="profit-dashboard" element={<ProfitDashboardPage />} />
             </Route>
             
             <Route path="*" element={<Navigate to="/" replace />} />
