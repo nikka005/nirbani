@@ -93,6 +93,8 @@ const SalesPage = () => {
         quantity: language === 'hi' ? 'मात्रा' : 'Quantity',
         rate: language === 'hi' ? 'दर' : 'Rate',
         save: language === 'hi' ? 'सहेजें' : 'Save',
+        shopSale: language === 'hi' ? 'दुकान बिक्री' : 'Shop Sale',
+        walkIn: language === 'hi' ? 'वॉक-इन ग्राहक' : 'Walk-in Customer',
         balance: language === 'hi' ? 'बकाया' : 'Balance',
         noData: language === 'hi' ? 'कोई डेटा नहीं' : 'No data',
         milk: language === 'hi' ? 'दूध' : 'Milk',
