@@ -1172,6 +1172,30 @@ async def get_today_sales(current_user: dict = Depends(get_current_user)):
         "sales": sales
     }
 
+@api_router.post("/sales/shop")
+async def create_shop_sale(sale: ShopSaleCreate, current_user: dict = Depends(get_current_user)):
+    """Quick shop/counter milk sale - no customer account needed"""
+    sale_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+    date_str = now.strftime("%Y-%m-%d")
+    amount = round(sale.quantity * sale.rate, 2)
+    sale_doc = {
+        "id": sale_id,
+        "customer_id": "shop_walk_in",
+        "customer_name": sale.customer_name or "Walk-in",
+        "product": sale.product,
+        "quantity": sale.quantity,
+        "rate": sale.rate,
+        "amount": amount,
+        "notes": sale.notes or "",
+        "is_shop_sale": True,
+        "date": date_str,
+        "created_at": now.isoformat()
+    }
+    await db.sales.insert_one(sale_doc)
+    del sale_doc["_id"]
+    return sale_doc
+
 # ==================== CUSTOMER BILLING ROUTES ====================
 
 @api_router.get("/customers/{customer_id}/sales")
