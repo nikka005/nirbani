@@ -50,6 +50,7 @@ const SalesPage = () => {
     const [submitting, setSubmitting] = useState(false);
     const [showAddCustomer, setShowAddCustomer] = useState(false);
     const [showAddSale, setShowAddSale] = useState(false);
+    const [showShopSale, setShowShopSale] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCustomer, setSelectedCustomer] = useState(null);
 
@@ -63,6 +64,13 @@ const SalesPage = () => {
 
     const [saleForm, setSaleForm] = useState({
         customer_id: '',
+        product: 'milk',
+        quantity: '',
+        rate: '',
+    });
+
+    const [shopForm, setShopForm] = useState({
+        customer_name: '',
         product: 'milk',
         quantity: '',
         rate: '',
