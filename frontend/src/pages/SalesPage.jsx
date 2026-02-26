@@ -488,6 +488,58 @@ const SalesPage = () => {
                     </form>
                 </DialogContent>
             </Dialog>
+
+            {/* Shop Sale Dialog */}
+            <Dialog open={showShopSale} onOpenChange={setShowShopSale}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="font-heading flex items-center gap-2">
+                            <Milk className="w-5 h-5 text-amber-600" />
+                            {texts.shopSale}
+                        </DialogTitle>
+                        <DialogDescription>{language === 'hi' ? 'दुकान से सीधी बिक्री (बिना ग्राहक खाते के)' : 'Direct shop counter sale (no customer account needed)'}</DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleShopSale} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label className="font-hindi">{language === 'hi' ? 'ग्राहक नाम (वैकल्पिक)' : 'Customer Name (optional)'}</Label>
+                            <Input value={shopForm.customer_name} onChange={(e) => setShopForm(p => ({...p, customer_name: e.target.value}))}
+                                placeholder={texts.walkIn} className="h-12" data-testid="shop-customer-name" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="font-hindi">{texts.product}</Label>
+                            <Select value={shopForm.product} onValueChange={(v) => setShopForm(p => ({...p, product: v}))}>
+                                <SelectTrigger className="h-12" data-testid="shop-product"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    {productOptions.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label className="font-hindi">{texts.quantity} (L) *</Label>
+                                <Input type="number" step="0.1" value={shopForm.quantity}
+                                    onChange={(e) => setShopForm(p => ({...p, quantity: e.target.value}))}
+                                    className="h-12 text-lg" data-testid="shop-quantity" required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="font-hindi">{texts.rate} (₹) *</Label>
+                                <Input type="number" step="0.5" value={shopForm.rate}
+                                    onChange={(e) => setShopForm(p => ({...p, rate: e.target.value}))}
+                                    className="h-12 text-lg" data-testid="shop-rate" required />
+                            </div>
+                        </div>
+                        {shopForm.quantity && shopForm.rate && (
+                            <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-center">
+                                <span className="text-sm text-amber-600">{language === 'hi' ? 'कुल राशि' : 'Total'}:</span>
+                                <span className="text-xl font-bold text-amber-700 ml-2">₹{(parseFloat(shopForm.quantity || 0) * parseFloat(shopForm.rate || 0)).toFixed(2)}</span>
+                            </div>
+                        )}
+                        <Button type="submit" className="w-full h-12 bg-amber-600 hover:bg-amber-700" disabled={submitting} data-testid="submit-shop-sale">
+                            {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : texts.save}
+                        </Button>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
