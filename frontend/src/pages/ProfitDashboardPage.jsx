@@ -72,7 +72,7 @@ const ProfitDashboardPage = () => {
             </div>
 
             {/* Profit Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
                 <Card className={p.net_profit >= 0 ? "bg-emerald-50 border-emerald-200" : "bg-red-50 border-red-200"}>
                     <CardContent className="p-4">
                         <div className="flex items-center gap-2 mb-1">
@@ -87,6 +87,13 @@ const ProfitDashboardPage = () => {
                         <div className="flex items-center gap-2 mb-1"><Factory className="w-4 h-4 text-blue-600" /><span className="text-xs text-blue-600 font-semibold">{t('Dispatch Income', 'डिस्पैच आय')}</span></div>
                         <p className="text-2xl font-bold text-blue-700">{formatCurrency(disp.total_amount || 0)}</p>
                         <p className="text-xs text-blue-500">{disp.total_kg || 0} KG @ ₹{disp.avg_rate || 0}/KG</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-orange-50 border-orange-200">
+                    <CardContent className="p-4">
+                        <div className="flex items-center gap-2 mb-1"><ShoppingBag className="w-4 h-4 text-orange-600" /><span className="text-xs text-orange-600 font-semibold">{t('Retail Sales', 'खुदरा बिक्री')}</span></div>
+                        <p className="text-2xl font-bold text-orange-700">{formatCurrency(retail.total_amount || 0)}</p>
+                        <p className="text-xs text-orange-500">{retail.count || 0} {t('sales', 'बिक्री')}</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-amber-50 border-amber-200">
