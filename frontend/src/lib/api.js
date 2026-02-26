@@ -97,6 +97,7 @@ export const dairyPlantAPI = {
     getById: (id) => api.get(`/dairy-plants/${id}`),
     update: (id, data) => api.put(`/dairy-plants/${id}`, data),
     getLedger: (id, params) => api.get(`/dairy-plants/${id}/ledger`, { params }),
+    getStatement: (id, params) => api.get(`/dairy-plants/${id}/statement`, { params }),
 };
 
 // Dispatch APIs
@@ -106,6 +107,7 @@ export const dispatchAPI = {
     getById: (id) => api.get(`/dispatches/${id}`),
     delete: (id) => api.delete(`/dispatches/${id}`),
     matchSlip: (id, data) => api.put(`/dispatches/${id}/slip-match`, data),
+    getBill: (id) => api.get(`/dispatches/${id}/bill`),
 };
 
 // Dairy Payment APIs
