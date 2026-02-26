@@ -318,6 +318,112 @@ class DashboardStats(BaseModel):
     total_pending_payments: float
     collections_count: int
 
+
+# ==================== DAIRY PLANT MODELS ====================
+
+# Dairy Plant (Sabar Dairy etc.)
+class DairyPlantCreate(BaseModel):
+    name: str
+    code: Optional[str] = ""
+    address: Optional[str] = ""
+    phone: Optional[str] = ""
+    contact_person: Optional[str] = ""
+
+class DairyPlantUpdate(BaseModel):
+    name: Optional[str] = None
+    code: Optional[str] = None
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    contact_person: Optional[str] = None
+
+class DairyPlantResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    name: str
+    code: str
+    address: str
+    phone: str
+    contact_person: str
+    total_milk_supplied: float
+    total_amount: float
+    total_paid: float
+    balance: float
+    is_active: bool
+    created_at: str
+
+# Dispatch Entry (Daily milk dispatch to dairy plant)
+class DispatchDeduction(BaseModel):
+    type: str  # transport, quality_penalty, commission, testing_charges, other
+    amount: float
+    notes: Optional[str] = ""
+
+class DispatchCreate(BaseModel):
+    dairy_plant_id: str
+    date: Optional[str] = None
+    tanker_number: Optional[str] = ""
+    quantity_kg: float
+    avg_fat: float
+    avg_snf: float
+    clr: Optional[float] = None
+    rate_per_kg: float
+    deductions: Optional[List[DispatchDeduction]] = []
+    notes: Optional[str] = ""
+
+class DispatchResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    dairy_plant_id: str
+    dairy_plant_name: str
+    date: str
+    tanker_number: str
+    quantity_kg: float
+    avg_fat: float
+    avg_snf: float
+    clr: Optional[float] = None
+    rate_per_kg: float
+    gross_amount: float
+    deductions: list
+    total_deduction: float
+    net_receivable: float
+    notes: str
+    # Slip matching fields
+    slip_fat: Optional[float] = None
+    slip_snf: Optional[float] = None
+    slip_amount: Optional[float] = None
+    slip_deductions: Optional[float] = None
+    fat_difference: Optional[float] = None
+    amount_difference: Optional[float] = None
+    slip_matched: bool = False
+    created_at: str
+
+# Dispatch Slip Matching
+class SlipMatchCreate(BaseModel):
+    slip_fat: float
+    slip_snf: float
+    slip_amount: float
+    slip_deductions: Optional[float] = 0
+
+# Dairy Payment
+class DairyPaymentCreate(BaseModel):
+    dairy_plant_id: str
+    amount: float
+    payment_mode: str  # cash, upi, bank, cheque
+    reference_number: Optional[str] = ""
+    notes: Optional[str] = ""
+
+class DairyPaymentResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    dairy_plant_id: str
+    dairy_plant_name: str
+    amount: float
+    payment_mode: str
+    reference_number: str
+    notes: str
+    date: str
+    created_at: str
+
+
 # ==================== AUTH UTILITIES ====================
 
 def hash_password(password: str) -> str:
