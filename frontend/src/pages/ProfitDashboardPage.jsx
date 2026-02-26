@@ -11,7 +11,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import {
     TrendingUp, TrendingDown, Loader2, Droplets, AlertTriangle,
-    Weight, Wallet, Receipt, Factory, Users
+    Weight, Wallet, Receipt, Factory, Users, Printer, ShoppingBag
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
