@@ -14,7 +14,7 @@ import {
 } from '../components/ui/select';
 import {
     Truck, Plus, Loader2, Trash2, Factory, Droplets, Weight,
-    AlertTriangle, Check, Calculator, X
+    AlertTriangle, Check, Calculator, X, Printer
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
