@@ -90,4 +90,34 @@ export const reportAPI = {
     getFarmerReport: (farmerId, params) => api.get(`/reports/farmer/${farmerId}`, { params }),
 };
 
+// Dairy Plant APIs
+export const dairyPlantAPI = {
+    create: (data) => api.post('/dairy-plants', data),
+    getAll: () => api.get('/dairy-plants'),
+    getById: (id) => api.get(`/dairy-plants/${id}`),
+    update: (id, data) => api.put(`/dairy-plants/${id}`, data),
+    getLedger: (id, params) => api.get(`/dairy-plants/${id}/ledger`, { params }),
+};
+
+// Dispatch APIs
+export const dispatchAPI = {
+    create: (data) => api.post('/dispatches', data),
+    getAll: (params) => api.get('/dispatches', { params }),
+    getById: (id) => api.get(`/dispatches/${id}`),
+    delete: (id) => api.delete(`/dispatches/${id}`),
+    matchSlip: (id, data) => api.put(`/dispatches/${id}/slip-match`, data),
+};
+
+// Dairy Payment APIs
+export const dairyPaymentAPI = {
+    create: (data) => api.post('/dairy-payments', data),
+    getAll: (params) => api.get('/dairy-payments', { params }),
+};
+
+// Dairy Reports APIs
+export const dairyReportAPI = {
+    profitReport: (params) => api.get('/dairy/profit-report', { params }),
+    fatAnalysis: (params) => api.get('/dairy/fat-analysis', { params }),
+};
+
 export default api;
