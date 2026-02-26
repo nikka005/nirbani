@@ -85,6 +85,17 @@ const DairyLedgerPage = () => {
         } finally { setSubmitting(false); }
     };
 
+    const handlePrintStatement = async () => {
+        if (!selectedPlant) return;
+        try {
+            const res = await dairyPlantAPI.getStatement(selectedPlant, {});
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(res.data.html);
+            printWindow.document.close();
+            printWindow.print();
+        } catch (error) { toast.error(t('Print error', 'प्रिंट त्रुटि')); }
+    };
+
     const plant = ledger?.plant;
 
     if (loading && !ledger) {
