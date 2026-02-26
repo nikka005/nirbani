@@ -122,4 +122,11 @@ export const dairyReportAPI = {
     fatAnalysis: (params) => api.get('/dairy/fat-analysis', { params }),
 };
 
+export const saleAPI = {
+    create: (data) => api.post('/sales', data),
+    shopSale: (data) => api.post('/sales/shop', data),
+    getToday: () => api.get('/sales/today'),
+    getAll: (params) => api.get('/sales', { params }),
+};
+
 export default api;
