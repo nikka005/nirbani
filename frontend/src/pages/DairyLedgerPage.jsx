@@ -128,6 +128,9 @@ const DairyLedgerPage = () => {
                     <Button onClick={() => setShowPayment(true)} data-testid="record-dairy-payment" className="bg-emerald-700 hover:bg-emerald-800 h-9">
                         <Plus className="w-4 h-4 mr-1" />{t('Payment', 'भुगतान')}
                     </Button>
+                    <Button variant="outline" onClick={handlePrintStatement} data-testid="print-statement" className="h-9">
+                        <Printer className="w-4 h-4 mr-1" />{t('Print', 'प्रिंट')}
+                    </Button>
                 </div>
             </div>
 
