@@ -221,6 +221,13 @@ class SaleCreate(BaseModel):
     rate: float
     notes: Optional[str] = ""
 
+class ShopSaleCreate(BaseModel):
+    customer_name: Optional[str] = "Walk-in"
+    product: str = "milk"
+    quantity: float
+    rate: float
+    notes: Optional[str] = ""
+
 class SaleResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str
