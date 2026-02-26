@@ -17,7 +17,7 @@ import {
 } from '../components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import {
-    Factory, Plus, Loader2, Wallet, Truck, CreditCard, Check, Weight
+    Factory, Plus, Loader2, Wallet, Truck, CreditCard, Check, Weight, Printer
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
