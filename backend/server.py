@@ -2961,6 +2961,391 @@ Return ONLY the JSON array, no markdown, no explanation."""
         logging.error(f"OCR Error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"OCR processing failed: {str(e)}")
 
+# ==================== DAIRY PLANT ROUTES ====================
+
+@api_router.post("/dairy-plants", response_model=DairyPlantResponse)
+async def create_dairy_plant(plant: DairyPlantCreate, current_user: dict = Depends(get_current_user)):
+    plant_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+    plant_doc = {
+        "id": plant_id,
+        "name": plant.name,
+        "code": plant.code or "",
+        "address": plant.address or "",
+        "phone": plant.phone or "",
+        "contact_person": plant.contact_person or "",
+        "total_milk_supplied": 0,
+        "total_amount": 0,
+        "total_paid": 0,
+        "balance": 0,
+        "is_active": True,
+        "created_at": now.isoformat(),
+    }
+    await db.dairy_plants.insert_one(plant_doc)
+    del plant_doc["_id"]
+    return DairyPlantResponse(**plant_doc)
+
+@api_router.get("/dairy-plants", response_model=List[DairyPlantResponse])
+async def get_dairy_plants(current_user: dict = Depends(get_current_user)):
+    plants = await db.dairy_plants.find({"is_active": True}, {"_id": 0}).sort("name", 1).to_list(100)
+    return [DairyPlantResponse(**p) for p in plants]
+
+@api_router.get("/dairy-plants/{plant_id}", response_model=DairyPlantResponse)
+async def get_dairy_plant(plant_id: str, current_user: dict = Depends(get_current_user)):
+    plant = await db.dairy_plants.find_one({"id": plant_id}, {"_id": 0})
+    if not plant:
+        raise HTTPException(status_code=404, detail="Dairy plant not found")
+    return DairyPlantResponse(**plant)
+
+@api_router.put("/dairy-plants/{plant_id}", response_model=DairyPlantResponse)
+async def update_dairy_plant(plant_id: str, updates: DairyPlantUpdate, current_user: dict = Depends(get_current_user)):
+    plant = await db.dairy_plants.find_one({"id": plant_id}, {"_id": 0})
+    if not plant:
+        raise HTTPException(status_code=404, detail="Dairy plant not found")
+    update_data = {k: v for k, v in updates.model_dump().items() if v is not None}
+    if update_data:
+        await db.dairy_plants.update_one({"id": plant_id}, {"$set": update_data})
+    updated = await db.dairy_plants.find_one({"id": plant_id}, {"_id": 0})
+    return DairyPlantResponse(**updated)
+
+# ==================== DISPATCH ROUTES ====================
+
+@api_router.post("/dispatches", response_model=DispatchResponse)
+async def create_dispatch(dispatch: DispatchCreate, current_user: dict = Depends(get_current_user)):
+    plant = await db.dairy_plants.find_one({"id": dispatch.dairy_plant_id}, {"_id": 0})
+    if not plant:
+        raise HTTPException(status_code=404, detail="Dairy plant not found")
+
+    dispatch_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+    date_str = dispatch.date or now.strftime("%Y-%m-%d")
+
+    gross_amount = round(dispatch.quantity_kg * dispatch.rate_per_kg, 2)
+    deductions_list = [d.model_dump() for d in (dispatch.deductions or [])]
+    total_deduction = round(sum(d["amount"] for d in deductions_list), 2)
+    net_receivable = round(gross_amount - total_deduction, 2)
+
+    dispatch_doc = {
+        "id": dispatch_id,
+        "dairy_plant_id": dispatch.dairy_plant_id,
+        "dairy_plant_name": plant["name"],
+        "date": date_str,
+        "tanker_number": dispatch.tanker_number or "",
+        "quantity_kg": dispatch.quantity_kg,
+        "avg_fat": dispatch.avg_fat,
+        "avg_snf": dispatch.avg_snf,
+        "clr": dispatch.clr,
+        "rate_per_kg": dispatch.rate_per_kg,
+        "gross_amount": gross_amount,
+        "deductions": deductions_list,
+        "total_deduction": total_deduction,
+        "net_receivable": net_receivable,
+        "notes": dispatch.notes or "",
+        "slip_fat": None,
+        "slip_snf": None,
+        "slip_amount": None,
+        "slip_deductions": None,
+        "fat_difference": None,
+        "amount_difference": None,
+        "slip_matched": False,
+        "created_at": now.isoformat(),
+    }
+    await db.dispatches.insert_one(dispatch_doc)
+    del dispatch_doc["_id"]
+
+    # Update dairy plant totals
+    await db.dairy_plants.update_one(
+        {"id": dispatch.dairy_plant_id},
+        {"$inc": {"total_milk_supplied": dispatch.quantity_kg, "total_amount": net_receivable, "balance": net_receivable}}
+    )
+
+    return DispatchResponse(**dispatch_doc)
+
+@api_router.get("/dispatches")
+async def get_dispatches(
+    dairy_plant_id: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if dairy_plant_id:
+        query["dairy_plant_id"] = dairy_plant_id
+    if start_date:
+        query.setdefault("date", {})["$gte"] = start_date
+    if end_date:
+        query.setdefault("date", {})["$lte"] = end_date
+    dispatches = await db.dispatches.find(query, {"_id": 0}).sort("date", -1).to_list(500)
+    return dispatches
+
+@api_router.get("/dispatches/{dispatch_id}", response_model=DispatchResponse)
+async def get_dispatch(dispatch_id: str, current_user: dict = Depends(get_current_user)):
+    dispatch = await db.dispatches.find_one({"id": dispatch_id}, {"_id": 0})
+    if not dispatch:
+        raise HTTPException(status_code=404, detail="Dispatch not found")
+    return DispatchResponse(**dispatch)
+
+@api_router.delete("/dispatches/{dispatch_id}")
+async def delete_dispatch(dispatch_id: str, current_user: dict = Depends(get_current_user)):
+    dispatch = await db.dispatches.find_one({"id": dispatch_id}, {"_id": 0})
+    if not dispatch:
+        raise HTTPException(status_code=404, detail="Dispatch not found")
+    await db.dairy_plants.update_one(
+        {"id": dispatch["dairy_plant_id"]},
+        {"$inc": {"total_milk_supplied": -dispatch["quantity_kg"], "total_amount": -dispatch["net_receivable"], "balance": -dispatch["net_receivable"]}}
+    )
+    await db.dispatches.delete_one({"id": dispatch_id})
+    return {"message": "Dispatch deleted"}
+
+# ==================== SLIP MATCHING ROUTES ====================
+
+@api_router.put("/dispatches/{dispatch_id}/slip-match")
+async def match_dispatch_slip(dispatch_id: str, slip: SlipMatchCreate, current_user: dict = Depends(get_current_user)):
+    dispatch = await db.dispatches.find_one({"id": dispatch_id}, {"_id": 0})
+    if not dispatch:
+        raise HTTPException(status_code=404, detail="Dispatch not found")
+
+    fat_diff = round(dispatch["avg_fat"] - slip.slip_fat, 2)
+    amount_diff = round(dispatch["net_receivable"] - slip.slip_amount, 2)
+
+    # If slip amount differs, adjust dairy plant balance
+    if dispatch.get("slip_matched") and dispatch.get("slip_amount"):
+        old_diff = dispatch["net_receivable"] - dispatch["slip_amount"]
+        await db.dairy_plants.update_one(
+            {"id": dispatch["dairy_plant_id"]},
+            {"$inc": {"total_amount": old_diff, "balance": old_diff}}
+        )
+
+    new_balance_adj = dispatch["net_receivable"] - slip.slip_amount
+    await db.dairy_plants.update_one(
+        {"id": dispatch["dairy_plant_id"]},
+        {"$inc": {"total_amount": -new_balance_adj, "balance": -new_balance_adj}}
+    )
+
+    await db.dispatches.update_one(
+        {"id": dispatch_id},
+        {"$set": {
+            "slip_fat": slip.slip_fat,
+            "slip_snf": slip.slip_snf,
+            "slip_amount": slip.slip_amount,
+            "slip_deductions": slip.slip_deductions,
+            "fat_difference": fat_diff,
+            "amount_difference": amount_diff,
+            "slip_matched": True,
+        }}
+    )
+
+    updated = await db.dispatches.find_one({"id": dispatch_id}, {"_id": 0})
+    return DispatchResponse(**updated)
+
+# ==================== DAIRY PAYMENT ROUTES ====================
+
+@api_router.post("/dairy-payments", response_model=DairyPaymentResponse)
+async def create_dairy_payment(payment: DairyPaymentCreate, current_user: dict = Depends(get_current_user)):
+    plant = await db.dairy_plants.find_one({"id": payment.dairy_plant_id}, {"_id": 0})
+    if not plant:
+        raise HTTPException(status_code=404, detail="Dairy plant not found")
+
+    payment_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+    payment_doc = {
+        "id": payment_id,
+        "dairy_plant_id": payment.dairy_plant_id,
+        "dairy_plant_name": plant["name"],
+        "amount": payment.amount,
+        "payment_mode": payment.payment_mode,
+        "reference_number": payment.reference_number or "",
+        "notes": payment.notes or "",
+        "date": now.strftime("%Y-%m-%d"),
+        "created_at": now.isoformat(),
+    }
+    await db.dairy_payments.insert_one(payment_doc)
+    del payment_doc["_id"]
+
+    await db.dairy_plants.update_one(
+        {"id": payment.dairy_plant_id},
+        {"$inc": {"total_paid": payment.amount, "balance": -payment.amount}}
+    )
+
+    return DairyPaymentResponse(**payment_doc)
+
+@api_router.get("/dairy-payments")
+async def get_dairy_payments(dairy_plant_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    query = {}
+    if dairy_plant_id:
+        query["dairy_plant_id"] = dairy_plant_id
+    payments = await db.dairy_payments.find(query, {"_id": 0}).sort("date", -1).to_list(500)
+    return payments
+
+# ==================== DAIRY LEDGER & PROFIT ROUTES ====================
+
+@api_router.get("/dairy-plants/{plant_id}/ledger")
+async def get_dairy_ledger(plant_id: str, start_date: Optional[str] = None, end_date: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    plant = await db.dairy_plants.find_one({"id": plant_id}, {"_id": 0})
+    if not plant:
+        raise HTTPException(status_code=404, detail="Dairy plant not found")
+
+    dq = {"dairy_plant_id": plant_id}
+    if start_date:
+        dq.setdefault("date", {})["$gte"] = start_date
+    if end_date:
+        dq.setdefault("date", {})["$lte"] = end_date
+
+    dispatches = await db.dispatches.find(dq, {"_id": 0}).sort("date", -1).to_list(500)
+    payments = await db.dairy_payments.find(dq, {"_id": 0}).sort("date", -1).to_list(500)
+
+    return {"plant": DairyPlantResponse(**plant).model_dump(), "dispatches": dispatches, "payments": payments}
+
+@api_router.get("/dairy/profit-report")
+async def dairy_profit_report(date: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    """Calculate real net profit: Dispatch income - Farmer costs - Expenses"""
+    if date:
+        start_date = date
+        end_date = date
+
+    if not start_date:
+        start_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    if not end_date:
+        end_date = start_date
+
+    # Get dispatch income
+    dispatch_query = {"date": {"$gte": start_date, "$lte": end_date}}
+    dispatches = await db.dispatches.find(dispatch_query, {"_id": 0}).to_list(1000)
+    total_dispatch_amount = sum(d.get("net_receivable", 0) for d in dispatches)
+    total_dispatch_kg = sum(d.get("quantity_kg", 0) for d in dispatches)
+    avg_selling_rate = round(total_dispatch_amount / total_dispatch_kg, 2) if total_dispatch_kg > 0 else 0
+
+    # Get farmer purchase cost
+    collection_query = {"date": {"$gte": start_date, "$lte": end_date}}
+    collections = await db.milk_collections.find(collection_query, {"_id": 0}).to_list(5000)
+    total_farmer_amount = sum(c.get("amount", 0) for c in collections)
+    total_collection_liters = sum(c.get("quantity", 0) for c in collections)
+    total_collection_kg = round(total_collection_liters * 1.03, 2)  # Convert liters to KG
+    avg_buying_rate = round(total_farmer_amount / total_collection_liters, 2) if total_collection_liters > 0 else 0
+
+    # Weighted FAT average from collections
+    weighted_fat = sum(c.get("fat", 0) * c.get("quantity", 0) for c in collections)
+    avg_collection_fat = round(weighted_fat / total_collection_liters, 2) if total_collection_liters > 0 else 0
+    weighted_snf = sum(c.get("snf", 0) * c.get("quantity", 0) for c in collections)
+    avg_collection_snf = round(weighted_snf / total_collection_liters, 2) if total_collection_liters > 0 else 0
+
+    # Dispatch FAT average
+    dispatch_weighted_fat = sum(d.get("avg_fat", 0) * d.get("quantity_kg", 0) for d in dispatches)
+    avg_dispatch_fat = round(dispatch_weighted_fat / total_dispatch_kg, 2) if total_dispatch_kg > 0 else 0
+
+    # Milk loss/gain
+    milk_difference_kg = round(total_collection_kg - total_dispatch_kg, 2)
+    milk_loss_percent = round((milk_difference_kg / total_collection_kg) * 100, 2) if total_collection_kg > 0 else 0
+
+    # Get expenses
+    expense_query = {"date": {"$gte": start_date, "$lte": end_date}}
+    expenses = await db.expenses.find(expense_query, {"_id": 0}).to_list(1000)
+    total_expenses = sum(e.get("amount", 0) for e in expenses)
+    expense_by_category = {}
+    for e in expenses:
+        cat = e.get("category", "other")
+        expense_by_category[cat] = expense_by_category.get(cat, 0) + e.get("amount", 0)
+
+    # Dispatch deductions breakdown
+    total_dispatch_deductions = sum(d.get("total_deduction", 0) for d in dispatches)
+
+    # Calculate profits
+    gross_margin_per_unit = round(avg_selling_rate - avg_buying_rate, 2)
+    gross_profit = round(total_dispatch_amount - total_farmer_amount, 2)
+    net_profit = round(gross_profit - total_expenses, 2)
+
+    return {
+        "period": {"start_date": start_date, "end_date": end_date},
+        "dispatch": {
+            "total_kg": total_dispatch_kg,
+            "total_amount": total_dispatch_amount,
+            "avg_rate": avg_selling_rate,
+            "avg_fat": avg_dispatch_fat,
+            "total_deductions": total_dispatch_deductions,
+            "count": len(dispatches),
+        },
+        "collection": {
+            "total_liters": total_collection_liters,
+            "total_kg": total_collection_kg,
+            "total_amount": total_farmer_amount,
+            "avg_rate": avg_buying_rate,
+            "avg_fat": avg_collection_fat,
+            "avg_snf": avg_collection_snf,
+            "count": len(collections),
+        },
+        "milk_tracking": {
+            "collected_kg": total_collection_kg,
+            "dispatched_kg": total_dispatch_kg,
+            "difference_kg": milk_difference_kg,
+            "loss_percent": milk_loss_percent,
+            "alert": milk_loss_percent > 1,
+        },
+        "fat_analysis": {
+            "collection_avg_fat": avg_collection_fat,
+            "dispatch_avg_fat": avg_dispatch_fat,
+            "fat_deviation": round(avg_collection_fat - avg_dispatch_fat, 2),
+        },
+        "expenses": {
+            "total": total_expenses,
+            "by_category": expense_by_category,
+        },
+        "profit": {
+            "gross_margin_per_unit": gross_margin_per_unit,
+            "gross_profit": gross_profit,
+            "net_profit": net_profit,
+        },
+    }
+
+@api_router.get("/dairy/fat-analysis")
+async def fat_analysis_report(start_date: Optional[str] = None, end_date: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    """Farmer-wise FAT analysis for quality tracking"""
+    if not start_date:
+        start_date = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%d")
+    if not end_date:
+        end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    collections = await db.milk_collections.find(
+        {"date": {"$gte": start_date, "$lte": end_date}}, {"_id": 0}
+    ).to_list(10000)
+
+    farmer_stats = {}
+    for c in collections:
+        fid = c["farmer_id"]
+        if fid not in farmer_stats:
+            farmer_stats[fid] = {"farmer_id": fid, "farmer_name": c["farmer_name"], "total_qty": 0, "weighted_fat": 0, "entries": 0, "milk_type": c.get("milk_type", "cow")}
+        farmer_stats[fid]["total_qty"] += c["quantity"]
+        farmer_stats[fid]["weighted_fat"] += c["fat"] * c["quantity"]
+        farmer_stats[fid]["entries"] += 1
+
+    result = []
+    for fid, stats in farmer_stats.items():
+        avg_fat = round(stats["weighted_fat"] / stats["total_qty"], 2) if stats["total_qty"] > 0 else 0
+        result.append({
+            "farmer_id": stats["farmer_id"],
+            "farmer_name": stats["farmer_name"],
+            "milk_type": stats["milk_type"],
+            "total_quantity": round(stats["total_qty"], 1),
+            "avg_fat": avg_fat,
+            "entries": stats["entries"],
+            "quality": "good" if avg_fat >= 4.0 else ("average" if avg_fat >= 3.0 else "low"),
+        })
+
+    result.sort(key=lambda x: x["avg_fat"], reverse=True)
+
+    overall_fat = round(sum(c["fat"] * c["quantity"] for c in collections) / sum(c["quantity"] for c in collections), 2) if collections else 0
+
+    return {
+        "period": {"start_date": start_date, "end_date": end_date},
+        "overall_avg_fat": overall_fat,
+        "total_farmers": len(result),
+        "quality_breakdown": {
+            "good": len([r for r in result if r["quality"] == "good"]),
+            "average": len([r for r in result if r["quality"] == "average"]),
+            "low": len([r for r in result if r["quality"] == "low"]),
+        },
+        "farmers": result,
+    }
+
 # ==================== HEALTH CHECK ====================
 
 @api_router.get("/")
