@@ -475,20 +475,42 @@ const CollectionPage = () => {
                         </div>
 
                         {hasFixedRate ? (
-                            <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200" data-testid="fixed-rate-info">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-semibold text-emerald-700">{t('Fixed Rate Applied', 'निश्चित दर लागू')}</p>
-                                        <p className="text-xs text-emerald-600 mt-0.5">{t('Fat/SNF not needed for fixed rate farmers', 'निश्चित दर किसानों के लिए फैट/एसएनएफ की जरूरत नहीं')}</p>
-                                    </div>
-                                    <p className="text-2xl font-bold text-emerald-700">₹{selectedFarmer.fixed_rate}<span className="text-sm font-normal">/L</span></p>
-                                </div>
-                                {formData.quantity && (
-                                    <div className="mt-2 pt-2 border-t border-emerald-200 flex justify-between">
-                                        <span className="text-sm text-emerald-600">{t('Estimated Amount', 'अनुमानित राशि')}:</span>
-                                        <span className="font-bold text-emerald-700">₹{(parseFloat(formData.quantity || 0) * selectedFarmer.fixed_rate).toFixed(2)}</span>
+                            <div className="space-y-3">
+                                {isBothType && (
+                                    <div className="grid grid-cols-2 gap-2" data-testid="collection-milk-type-selector">
+                                        <button type="button" onClick={() => setCollectionMilkType('cow')}
+                                            className={cn("py-3 rounded-xl border-2 text-sm font-semibold transition-all flex items-center justify-center gap-2",
+                                                collectionMilkType === 'cow' ? "border-amber-500 bg-amber-50 text-amber-700" : "border-zinc-200 text-zinc-600")}>
+                                            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                                            {t('Cow', 'गाय')} {selectedFarmer.cow_rate > 0 ? `₹${selectedFarmer.cow_rate}/L` : ''}
+                                        </button>
+                                        <button type="button" onClick={() => setCollectionMilkType('buffalo')}
+                                            className={cn("py-3 rounded-xl border-2 text-sm font-semibold transition-all flex items-center justify-center gap-2",
+                                                collectionMilkType === 'buffalo' ? "border-zinc-700 bg-zinc-100 text-zinc-800" : "border-zinc-200 text-zinc-600")}>
+                                            <span className="w-2 h-2 rounded-full bg-zinc-700"></span>
+                                            {t('Buffalo', 'भैंस')} {selectedFarmer.buffalo_rate > 0 ? `₹${selectedFarmer.buffalo_rate}/L` : ''}
+                                        </button>
                                     </div>
                                 )}
+                                <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200" data-testid="fixed-rate-info">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-semibold text-emerald-700">{t('Fixed Rate Applied', 'निश्चित दर लागू')}</p>
+                                            <p className="text-xs text-emerald-600 mt-0.5">
+                                                {isBothType 
+                                                    ? (collectionMilkType === 'cow' ? t('Cow milk rate', 'गाय दूध की दर') : t('Buffalo milk rate', 'भैंस दूध की दर'))
+                                                    : t('Fat/SNF not needed for fixed rate farmers', 'निश्चित दर किसानों के लिए फैट/एसएनएफ की जरूरत नहीं')}
+                                            </p>
+                                        </div>
+                                        <p className="text-2xl font-bold text-emerald-700">₹{activeRate}<span className="text-sm font-normal">/L</span></p>
+                                    </div>
+                                    {formData.quantity && (
+                                        <div className="mt-2 pt-2 border-t border-emerald-200 flex justify-between">
+                                            <span className="text-sm text-emerald-600">{t('Estimated Amount', 'अनुमानित राशि')}:</span>
+                                            <span className="font-bold text-emerald-700">₹{(parseFloat(formData.quantity || 0) * activeRate).toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         ) : (
                             <div className="grid grid-cols-2 gap-4">
