@@ -1,43 +1,54 @@
 # Nirbani Dairy Management System - PRD
 
 ## Original Problem Statement
-Complete Dairy ERP system for Indian dairy businesses. Bilingual (Hindi/English) PWA.
+Complete Dairy Management Software (Web PWA) for Indian dairy businesses. Handles milk collection, fat/SNF calculation, farmer payments, customer billing, SMS alerts, inventory, bulk dairy plant sales, and shop sales — all automated with bilingual (English/Hindi) UI.
 
 ## Tech Stack
-- Frontend: React, Tailwind CSS, Shadcn/UI, Recharts, PWA
-- Backend: FastAPI, MongoDB (motor), openpyxl, emergentintegrations (OpenAI)
-- Deployment: AWS EC2, Nginx, PM2
+- **Frontend**: React, Tailwind CSS, Shadcn/UI, i18next, Recharts, PWA
+- **Backend**: FastAPI (monolithic server.py), MongoDB (motor), ReportLab (PDFs)
+- **AI**: OpenAI GPT-4o for Rate Chart OCR via emergentintegrations
+- **Deployment**: User-managed AWS EC2 with Nginx & PM2
 
-## Implemented Features
-1. Daily Milk Collection (Bulk Excel/CSV, shift-based)
-2. Farmer CRUD with Edit, milk_type support (cow/buffalo/both with separate rates)
-3. Customer CRUD with Edit
-4. **Shop Sales Dashboard** - Quick sale buttons for 8 products (milk, paneer, dahi, ghee, lassi, buttermilk, cream, other), product breakdown, shop vs customer sales tabs
-5. Inventory & Product Management
-6. Fat & SNF Rate Management (OCR upload)
-7. Billing (Thermal, A4, PDF, WhatsApp)
-8. Multi-Branch Management
-9. PWA Support
-10. Fixed Rate per milk type (cow_rate, buffalo_rate)
+## Core Modules Implemented
+1. Daily Milk Collection System (with dual cow/buffalo support)
+2. Farmer Account Management (CRUD, edit, dual milk types)
+3. Customer Milk Sale System
+4. Inventory & Product Management
+5. Fat & SNF Rate Management
+6. Billing & Printing System (ReportLab PDFs)
+7. SMS Automation System (MSG91 - inactive, needs API key)
+8. Daily Sales & Expense Tracking
+9. Multi-Branch Management
+10. Advanced Reports & Analytics
+11. Bulk Milk Sale to Dairy Plant (dispatch, ledger, profit dashboard)
+12. Shop Sales Dashboard (walk-in customers)
 
-## Dairy Plant Module
-- Multi-dairy plant management (Sabar Dairy)
-- Dispatch entries with structured deductions (transport, quality, commission, testing)
-- Slip Matching (your calc vs dairy slip)
-- Dairy Ledger with balance tracking
-- Dispatch bill print + Dairy statement print
-- Profit Dashboard: Net Profit = (Dispatch + Retail) - Farmer - Expenses
-- Milk loss tracking, FAT deviation alerts, farmer ranking
+## Completed Work
+- Full CRUD for Farmers, Customers with Edit dialogs
+- Bulk Milk Sale module (DairyDispatchPage, DairyLedgerPage, ProfitDashboardPage)
+- Shop Sales dashboard (SalesPage rewrite)
+- Dual milk types (cow/buffalo) for farmers with separate fixed rates
+- Printing for dispatches, ledgers, profit reports
+- Mobile responsiveness improvements
+- **Bug Fix (Feb 27, 2026)**: Fixed "both" milk type badge display on FarmersPage, CollectionPage (farmer search dropdown + selected farmer display)
 
-## Mobile Responsiveness
-- All pages verified responsive at 390x844 (iPhone viewport)
-- Sales, Profit, Dispatch, Ledger, Collection, Farmers, Dashboard - all responsive
+## Key DB Schema
+- `farmers`: {..., milk_types: list[str], cow_rate: float, buffalo_rate: float}
+- `milk_collections`: {..., milk_type: str}
+- `dairy_plants`: {name, address, ...}
+- `dispatches`: {dairy_plant_id, date, quantity_kg, avg_fat, ...}
+- `dairy_payments`: {dairy_plant_id, date, amount, ...}
+- `sales`: Used for both customer and shop sales
 
-## Navigation
-Dashboard > Collection > Farmers > Dairy Dispatch > Dairy Ledger > Profit > Payments > Expenses > Sales > Reports > Inventory > Branches > Rate Chart > Settings
+## Known Technical Debt
+- **backend/server.py is critically monolithic** — needs breaking into /routers, /models, /services
 
-## Backlog
-- P2: Customer Subscription System
-- P2: SMS (MSG91)
-- P3: Backend refactoring
-- P3: Licensing system
+## Upcoming Tasks (Prioritized)
+- P2: Customer Subscription System (monthly auto-billing)
+- P2: DLT Registration Guide (SMS compliance for India)
+- P3: Software Licensing System
+
+## Integrations
+- MSG91 SMS: Code exists, inactive (needs user API key)
+- ReportLab: Active for PDF generation
+- OpenAI GPT-4o: Active for Rate Chart OCR
