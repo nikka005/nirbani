@@ -92,7 +92,21 @@ const CollectionPage = () => {
     const buffaloMilk = allCollections.filter(c => c.milk_type === 'buffalo').reduce((s, c) => s + c.quantity, 0);
     const mixMilk = allCollections.filter(c => c.milk_type === 'mix').reduce((s, c) => s + c.quantity, 0);
 
-    const hasFixedRate = selectedFarmer?.fixed_rate && selectedFarmer.fixed_rate > 0;
+    // Determine if farmer has a fixed rate for the selected milk type
+    const isBothType = selectedFarmer?.milk_type === 'both';
+    const getActiveRate = () => {
+        if (!selectedFarmer) return null;
+        if (isBothType) {
+            return collectionMilkType === 'buffalo' 
+                ? (selectedFarmer.buffalo_rate || null) 
+                : (selectedFarmer.cow_rate || null);
+        }
+        if (selectedFarmer.milk_type === 'buffalo' && selectedFarmer.buffalo_rate > 0) return selectedFarmer.buffalo_rate;
+        if (selectedFarmer.milk_type === 'cow' && selectedFarmer.cow_rate > 0) return selectedFarmer.cow_rate;
+        return selectedFarmer.fixed_rate > 0 ? selectedFarmer.fixed_rate : null;
+    };
+    const activeRate = getActiveRate();
+    const hasFixedRate = activeRate && activeRate > 0;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
