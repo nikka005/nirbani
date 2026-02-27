@@ -23,6 +23,11 @@ import CustomerDetailPage from './pages/CustomerDetailPage';
 import DairyDispatchPage from './pages/DairyDispatchPage';
 import DairyLedgerPage from './pages/DairyLedgerPage';
 import ProfitDashboardPage from './pages/ProfitDashboardPage';
+
+// Admin Pages
+import AdminLoginPage from './pages/admin/AdminLoginPage';
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import UsersPage from './pages/UsersPage';
 
 // Layout
@@ -37,7 +42,7 @@ const ProtectedRoute = ({ children }) => {
             <div className="min-h-screen flex items-center justify-center bg-background">
                 <div className="text-center">
                     <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-700 rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-muted-foreground font-hindi">लोड हो रहा है...</p>
+                    <p className="text-muted-foreground">Loading...</p>
                 </div>
             </div>
         );
@@ -54,8 +59,8 @@ const ProtectedRoute = ({ children }) => {
 const AppRoutes = () => {
     return (
         <Routes>
+            {/* User Site */}
             <Route path="/login" element={<LoginPage />} />
-            
             <Route path="/" element={
                 <ProtectedRoute>
                     <MainLayout />
@@ -78,6 +83,12 @@ const AppRoutes = () => {
                 <Route path="dairy-dispatch" element={<DairyDispatchPage />} />
                 <Route path="dairy-ledger" element={<DairyLedgerPage />} />
                 <Route path="profit-dashboard" element={<ProfitDashboardPage />} />
+            </Route>
+
+            {/* Admin Panel */}
+            <Route path="/backman/login" element={<AdminLoginPage />} />
+            <Route path="/backman" element={<AdminLayout />}>
+                <Route index element={<AdminDashboardPage />} />
                 <Route path="users" element={<UsersPage />} />
             </Route>
             
