@@ -79,7 +79,7 @@ const ProfitDashboardPage = () => {
                             {p.net_profit >= 0 ? <TrendingUp className="w-4 h-4 text-emerald-600" /> : <TrendingDown className="w-4 h-4 text-red-600" />}
                             <span className={cn("text-xs font-semibold", p.net_profit >= 0 ? "text-emerald-600" : "text-red-600")}>{t('Net Profit', 'शुद्ध लाभ')}</span>
                         </div>
-                        <p className={cn("text-2xl font-bold", p.net_profit >= 0 ? "text-emerald-700" : "text-red-700")} data-testid="net-profit">{formatCurrency(p.net_profit || 0)}</p>
+                        <p className={cn("text-lg sm:text-2xl font-bold", p.net_profit >= 0 ? "text-emerald-700" : "text-red-700")} data-testid="net-profit">{formatCurrency(p.net_profit || 0)}</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-blue-50 border-blue-200">
