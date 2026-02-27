@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { 
     LayoutDashboard, Milk, Users, Wallet, FileText, LogOut, Languages,
     ChartLine, Settings, ShoppingBag, Package, Receipt, Building2, Upload,
-    Menu, X, Truck, Factory, TrendingUp
+    Menu, X, Truck, Factory, TrendingUp, ClipboardList
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
@@ -23,6 +23,7 @@ const allNavItems = [
     { path: '/payments', icon: Wallet, label: { en: 'Payments', hi: 'भुगतान' } },
     { path: '/expenses', icon: Receipt, label: { en: 'Expenses', hi: 'खर्च' } },
     { path: '/sales', icon: ShoppingBag, label: { en: 'Sales', hi: 'बिक्री' } },
+    { path: '/bulk-orders', icon: ClipboardList, label: { en: 'Bulk Orders', hi: 'बल्क ऑर्डर' } },
     { path: '/reports', icon: FileText, label: { en: 'Reports', hi: 'रिपोर्ट' } },
     { path: '/inventory', icon: Package, label: { en: 'Inventory', hi: 'इन्वेंटरी' } },
     { path: '/branches', icon: Building2, label: { en: 'Branches', hi: 'शाखाएँ' } },
