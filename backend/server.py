@@ -1295,11 +1295,19 @@ async def get_today_sales(current_user: dict = Depends(get_current_user)):
 
 @api_router.post("/sales/shop")
 async def create_shop_sale(sale: ShopSaleCreate, current_user: dict = Depends(get_current_user)):
-    """Quick shop/counter milk sale - supports udhar (credit)"""
+    """Quick shop/counter milk sale - supports udhar (credit) and direct amount"""
     sale_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
     date_str = now.strftime("%Y-%m-%d")
-    amount = round(sale.quantity * sale.rate, 2)
+    
+    if sale.direct_amount and sale.direct_amount > 0:
+        amount = round(sale.direct_amount, 2)
+        quantity = sale.quantity or 0
+        rate = sale.rate or 0
+    else:
+        quantity = sale.quantity or 0
+        rate = sale.rate or 0
+        amount = round(quantity * rate, 2)
     
     customer_name = sale.customer_name or "Walk-in"
     
