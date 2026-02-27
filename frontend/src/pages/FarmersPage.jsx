@@ -213,6 +213,7 @@ const FarmersPage = () => {
                                         <span className={cn(
                                             "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide",
                                             farmer.milk_type === 'buffalo' ? "bg-amber-100 text-amber-700" :
+                                            farmer.milk_type === 'both' ? "bg-emerald-100 text-emerald-700" :
                                             farmer.milk_type === 'mix' ? "bg-purple-100 text-purple-700" :
                                             "bg-blue-100 text-blue-700"
                                         )}>

@@ -421,8 +421,9 @@ const CollectionPage = () => {
                                             <p className="font-semibold text-sm">{selectedFarmer.name}</p>
                                             <span className={cn("px-1.5 py-0.5 rounded text-[9px] font-bold uppercase",
                                                 selectedFarmer.milk_type === 'buffalo' ? "bg-amber-100 text-amber-700" :
+                                                selectedFarmer.milk_type === 'both' ? "bg-emerald-100 text-emerald-700" :
                                                 selectedFarmer.milk_type === 'mix' ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700")}>
-                                                {selectedFarmer.milk_type === 'buffalo' ? t('Buffalo', 'भैंस') : selectedFarmer.milk_type === 'mix' ? t('Mix', 'मिक्स') : t('Cow', 'गाय')}
+                                                {selectedFarmer.milk_type === 'buffalo' ? t('Buffalo', 'भैंस') : selectedFarmer.milk_type === 'both' ? t('Both', 'दोनों') : selectedFarmer.milk_type === 'mix' ? t('Mix', 'मिक्स') : t('Cow', 'गाय')}
                                             </span>
                                         </div>
                                         <p className="text-xs text-zinc-500">
@@ -452,8 +453,9 @@ const CollectionPage = () => {
                                                             <p className="font-semibold text-sm">{farmer.name}</p>
                                                             <span className={cn("px-1 py-0.5 rounded text-[8px] font-bold uppercase",
                                                                 farmer.milk_type === 'buffalo' ? "bg-amber-100 text-amber-700" :
+                                                                farmer.milk_type === 'both' ? "bg-emerald-100 text-emerald-700" :
                                                                 farmer.milk_type === 'mix' ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700")}>
-                                                                {farmer.milk_type === 'buffalo' ? 'BUF' : farmer.milk_type === 'mix' ? 'MIX' : 'COW'}
+                                                                {farmer.milk_type === 'buffalo' ? 'BUF' : farmer.milk_type === 'both' ? t('BOTH', 'दोनों') : farmer.milk_type === 'mix' ? 'MIX' : 'COW'}
                                                             </span>
                                                             {farmer.fixed_rate && <span className="text-[9px] text-emerald-600 font-bold">₹{farmer.fixed_rate}/L</span>}
                                                         </div>
