@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [language, setLanguage] = useState(() => {
-        return localStorage.getItem('language') || 'hi';
+        return localStorage.getItem('language') || 'en';
     });
 
     useEffect(() => {
