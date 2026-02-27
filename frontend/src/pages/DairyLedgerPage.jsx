@@ -136,7 +136,7 @@ const DairyLedgerPage = () => {
 
             {/* Summary Cards */}
             {plant && (
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 gap-2 sm:gap-4">
                     <Card className="bg-blue-50 border-blue-200">
                         <CardContent className="p-4">
                             <div className="flex items-center gap-2 mb-1"><Weight className="w-4 h-4 text-blue-600" /><span className="text-xs text-blue-600 font-semibold">{t('Total Supplied', 'कुल आपूर्ति')}</span></div>
