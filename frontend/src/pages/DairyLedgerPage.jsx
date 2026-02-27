@@ -120,15 +120,15 @@ const DairyLedgerPage = () => {
                     <h1 className="font-heading text-xl sm:text-2xl font-bold text-zinc-900">{t('Dairy Ledger', 'डेयरी खाता')}</h1>
                     <p className="text-xs sm:text-sm text-muted-foreground">{t('Track dairy plant accounts', 'डेयरी प्लांट खातों की निगरानी')}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                     <Select value={selectedPlant || ''} onValueChange={handlePlantChange}>
-                        <SelectTrigger className="h-9 w-48" data-testid="ledger-plant-select"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-9 w-36 sm:w-48 text-xs sm:text-sm" data-testid="ledger-plant-select"><SelectValue /></SelectTrigger>
                         <SelectContent>{plants.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
                     </Select>
-                    <Button onClick={() => setShowPayment(true)} data-testid="record-dairy-payment" className="bg-emerald-700 hover:bg-emerald-800 h-9">
+                    <Button onClick={() => setShowPayment(true)} data-testid="record-dairy-payment" className="bg-emerald-700 hover:bg-emerald-800 h-9 text-xs sm:text-sm">
                         <Plus className="w-4 h-4 mr-1" />{t('Payment', 'भुगतान')}
                     </Button>
-                    <Button variant="outline" onClick={handlePrintStatement} data-testid="print-statement" className="h-9">
+                    <Button variant="outline" onClick={handlePrintStatement} data-testid="print-statement" className="h-9 text-xs sm:text-sm">
                         <Printer className="w-4 h-4 mr-1" />{t('Print', 'प्रिंट')}
                     </Button>
                 </div>
