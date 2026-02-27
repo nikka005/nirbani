@@ -616,12 +616,44 @@ const SalesPage = () => {
                         <DialogTitle className="flex items-center gap-2"><ShoppingBag className="w-5 h-5 text-emerald-600" />{t('Customer Sale', 'ग्राहक बिक्री')}</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleAddSale} className="space-y-4">
-                        <div className="space-y-2">
+                        <div className="space-y-2 relative">
                             <Label>{t('Customer', 'ग्राहक')} *</Label>
-                            <Select value={saleForm.customer_id} onValueChange={(v) => setSaleForm(p => ({...p, customer_id: v}))}>
-                                <SelectTrigger className="h-12" data-testid="sale-customer"><SelectValue placeholder={t('Select', 'चुनें')} /></SelectTrigger>
-                                <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                            </Select>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                                <Input
+                                    value={custSaleSearch}
+                                    onChange={(e) => { setCustSaleSearch(e.target.value); setShowCustSaleDropdown(true); }}
+                                    onFocus={() => setShowCustSaleDropdown(true)}
+                                    placeholder={saleForm.customer_id ? customers.find(c => c.id === saleForm.customer_id)?.name : t('Search customer...', 'ग्राहक खोजें...')}
+                                    className={cn("h-12 pl-10", saleForm.customer_id && "border-emerald-400 bg-emerald-50")}
+                                    data-testid="sale-customer-search" />
+                                {saleForm.customer_id && (
+                                    <button type="button" onClick={() => { setSaleForm(p => ({...p, customer_id: ''})); setCustSaleSearch(''); }}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 text-xs">✕</button>
+                                )}
+                            </div>
+                            {showCustSaleDropdown && (
+                                <div className="absolute z-50 w-full bg-white border rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto">
+                                    {customers.filter(c =>
+                                        !custSaleSearch || c.name?.toLowerCase().includes(custSaleSearch.toLowerCase()) || c.phone?.includes(custSaleSearch)
+                                    ).map(c => (
+                                        <button key={c.id} type="button" data-testid={`sale-cust-${c.id}`}
+                                            onClick={() => { setSaleForm(p => ({...p, customer_id: c.id})); setCustSaleSearch(''); setShowCustSaleDropdown(false); }}
+                                            className="w-full flex items-center gap-2 p-3 hover:bg-emerald-50 text-left border-b last:border-0">
+                                            <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center text-xs font-bold text-emerald-700">
+                                                {c.name?.charAt(0)?.toUpperCase()}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-semibold truncate">{c.name}</p>
+                                                <p className="text-[10px] text-zinc-500">{c.phone || ''} {c.customer_type ? `| ${c.customer_type}` : ''}</p>
+                                            </div>
+                                        </button>
+                                    ))}
+                                    {customers.filter(c => !custSaleSearch || c.name?.toLowerCase().includes(custSaleSearch.toLowerCase()) || c.phone?.includes(custSaleSearch)).length === 0 && (
+                                        <p className="p-3 text-sm text-zinc-400 text-center">{t('No match found', 'कोई मिलान नहीं')}</p>
+                                    )}
+                                </div>
+                            )}
                         </div>
                         <div className="space-y-2">
                             <Label>{t('Product', 'उत्पाद')}</Label>
