@@ -98,16 +98,21 @@ const SalesPage = () => {
 
     const handleAddSale = async (e) => {
         e.preventDefault();
-        if (!saleForm.customer_id || !saleForm.quantity || !saleForm.rate) {
-            toast.error(t('Fill all fields', 'सभी फ़ील्ड भरें')); return;
+        if (!saleForm.customer_id) { toast.error(t('Select customer', 'ग्राहक चुनें')); return; }
+        if (saleForm.mode === 'direct') {
+            if (!saleForm.direct_amount) { toast.error(t('Enter amount', 'राशि दर्ज करें')); return; }
+        } else {
+            if (!saleForm.quantity || !saleForm.rate) { toast.error(t('Fill quantity and rate', 'मात्रा और दर भरें')); return; }
         }
         setSubmitting(true);
         try {
             await axios.post(`${BACKEND_URL}/api/sales`, {
                 customer_id: saleForm.customer_id, product: saleForm.product,
-                quantity: parseFloat(saleForm.quantity), rate: parseFloat(saleForm.rate),
+                quantity: saleForm.quantity ? parseFloat(saleForm.quantity) : 0,
+                rate: saleForm.rate ? parseFloat(saleForm.rate) : 0,
+                direct_amount: saleForm.direct_amount ? parseFloat(saleForm.direct_amount) : null,
             }, { headers });
-            setSaleForm({ customer_id: '', product: 'milk', quantity: '', rate: '' });
+            setSaleForm({ customer_id: '', product: 'milk', quantity: '', rate: '', direct_amount: '', mode: 'direct' });
             setShowAddSale(false);
             toast.success(t('Sale recorded!', 'बिक्री दर्ज हुई!'));
             fetchData();
