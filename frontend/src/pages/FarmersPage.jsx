@@ -217,14 +217,20 @@ const FarmersPage = () => {
                                             "bg-blue-100 text-blue-700"
                                         )}>
                                             {farmer.milk_type === 'buffalo' ? (language === 'hi' ? 'भैंस' : 'Buffalo') :
+                                             farmer.milk_type === 'both' ? (language === 'hi' ? 'दोनों' : 'Both') :
                                              farmer.milk_type === 'mix' ? (language === 'hi' ? 'मिक्स' : 'Mix') :
                                              (language === 'hi' ? 'गाय' : 'Cow')}
                                         </span>
-                                        {farmer.fixed_rate && (
+                                        {farmer.milk_type === 'both' ? (
+                                            <>
+                                                {farmer.cow_rate > 0 && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">{language === 'hi' ? 'गाय' : 'Cow'} ₹{farmer.cow_rate}/L</span>}
+                                                {farmer.buffalo_rate > 0 && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-200 text-zinc-700">{language === 'hi' ? 'भैंस' : 'Buf'} ₹{farmer.buffalo_rate}/L</span>}
+                                            </>
+                                        ) : farmer.fixed_rate ? (
                                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
                                                 ₹{farmer.fixed_rate}/L
                                             </span>
-                                        )}
+                                        ) : null}
                                     </div>
                                     <div className="flex items-center gap-3 text-sm text-zinc-500">
                                         <span className="flex items-center gap-1">
