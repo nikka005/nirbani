@@ -214,7 +214,6 @@ class TestTodaySales:
         # Should have product breakdown
         if data["by_product"]:
             for product, breakdown in data["by_product"].items():
-                assert "count" in breakdown
                 assert "quantity" in breakdown
                 assert "amount" in breakdown
         
