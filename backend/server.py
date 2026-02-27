@@ -1440,6 +1440,101 @@ async def record_udhar_payment(payment: UdharPaymentCreate, current_user: dict =
     
     return doc
 
+# ==================== BULK ORDER ROUTES ====================
+
+@api_router.post("/bulk-orders")
+async def create_bulk_order(order: BulkOrderCreate, current_user: dict = Depends(get_current_user)):
+    order_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+    
+    if order.direct_amount and order.direct_amount > 0:
+        amount = round(order.direct_amount, 2)
+    else:
+        amount = round(order.quantity * order.rate, 2)
+    
+    doc = {
+        "id": order_id,
+        "customer_name": order.customer_name,
+        "customer_phone": order.customer_phone,
+        "customer_type": order.customer_type,
+        "product": order.product,
+        "quantity": order.quantity,
+        "rate": order.rate,
+        "amount": amount,
+        "delivery_address": order.delivery_address or "",
+        "notes": order.notes or "",
+        "is_recurring": order.is_recurring,
+        "status": order.status,
+        "date": now.strftime("%Y-%m-%d"),
+        "created_at": now.isoformat()
+    }
+    await db.bulk_orders.insert_one(doc)
+    del doc["_id"]
+    return doc
+
+@api_router.get("/bulk-orders")
+async def get_bulk_orders(date: Optional[str] = None, status: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    query = {}
+    if date:
+        query["date"] = date
+    if status:
+        query["status"] = status
+    orders = await db.bulk_orders.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return orders
+
+@api_router.put("/bulk-orders/{order_id}")
+async def update_bulk_order(order_id: str, updates: dict, current_user: dict = Depends(get_current_user)):
+    allowed = {"status", "quantity", "rate", "amount", "direct_amount", "notes", "delivery_address", "product"}
+    update_data = {k: v for k, v in updates.items() if k in allowed}
+    
+    # Recalculate amount if needed
+    if "direct_amount" in update_data and update_data["direct_amount"]:
+        update_data["amount"] = round(update_data["direct_amount"], 2)
+    elif "quantity" in update_data and "rate" in update_data:
+        update_data["amount"] = round(update_data["quantity"] * update_data["rate"], 2)
+    
+    if "direct_amount" in update_data:
+        del update_data["direct_amount"]
+    
+    result = await db.bulk_orders.update_one({"id": order_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    updated = await db.bulk_orders.find_one({"id": order_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/bulk-orders/{order_id}")
+async def delete_bulk_order(order_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.bulk_orders.delete_one({"id": order_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return {"message": "Order deleted"}
+
+@api_router.get("/bulk-order-customers")
+async def get_bulk_order_customers(current_user: dict = Depends(get_current_user)):
+    """Get unique customers from bulk orders for search/autocomplete"""
+    pipeline = [
+        {"$group": {
+            "_id": {"name": "$customer_name", "phone": "$customer_phone", "type": "$customer_type"},
+            "total_orders": {"$sum": 1},
+            "total_amount": {"$sum": "$amount"},
+            "last_order": {"$max": "$created_at"}
+        }},
+        {"$sort": {"last_order": -1}},
+        {"$project": {
+            "_id": 0,
+            "name": "$_id.name",
+            "phone": "$_id.phone",
+            "customer_type": "$_id.type",
+            "total_orders": 1,
+            "total_amount": 1,
+            "last_order": 1
+        }}
+    ]
+    customers = await db.bulk_orders.aggregate(pipeline).to_list(500)
+    return customers
+
+
 # ==================== CUSTOMER BILLING ROUTES ====================
 
 @api_router.get("/customers/{customer_id}/sales")
