@@ -41,6 +41,8 @@ const MainLayout = () => {
     const navigate = useNavigate();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+    const navItems = allNavItems.filter(item => !item.adminOnly || user?.role === 'admin');
+
     const isActive = (item) => item.exact 
         ? location.pathname === item.path 
         : location.pathname.startsWith(item.path);
