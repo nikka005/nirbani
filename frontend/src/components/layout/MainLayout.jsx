@@ -63,7 +63,7 @@ const MainLayout = () => {
                     </div>
                 </div>
                 <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-                    {allNavItems.map((item) => (
+                    {navItems.map((item) => (
                         <NavLink key={item.path} to={item.path}
                             data-testid={`nav-${item.path.replace('/', '') || 'dashboard'}`}
                             className={cn("flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
@@ -131,7 +131,7 @@ const MainLayout = () => {
                             </Button>
                         </div>
                         <div className="grid grid-cols-3 gap-2 p-4">
-                            {allNavItems.map((item) => (
+                            {navItems.map((item) => (
                                 <button key={item.path} onClick={() => { navigate(item.path); setMobileMenuOpen(false); }}
                                     data-testid={`menu-${item.path.replace('/', '') || 'dashboard'}`}
                                     className={cn("flex flex-col items-center gap-1.5 p-3 rounded-xl transition-colors",
