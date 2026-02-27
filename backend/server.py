@@ -592,6 +592,8 @@ async def create_farmer(farmer: FarmerCreate, current_user: dict = Depends(get_c
         "aadhar_number": farmer.aadhar_number or "",
         "milk_type": farmer.milk_type or "cow",
         "fixed_rate": farmer.fixed_rate,
+        "cow_rate": farmer.cow_rate,
+        "buffalo_rate": farmer.buffalo_rate,
         "total_milk": 0.0,
         "total_due": 0.0,
         "total_paid": 0.0,
