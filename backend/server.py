@@ -596,6 +596,33 @@ async def delete_user(user_id: str, current_user: dict = Depends(get_current_use
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "User deleted"}
 
+@api_router.post("/admin/login", response_model=TokenResponse)
+async def admin_login(credentials: UserLogin):
+    user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
+    
+    if not user or not verify_password(credentials.password, user["password"]):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access only")
+    
+    if not user.get("is_active", True):
+        raise HTTPException(status_code=403, detail="Account is disabled")
+    
+    token = create_access_token(user["id"], user["email"], user["role"])
+    
+    return TokenResponse(
+        access_token=token,
+        user=UserResponse(
+            id=user["id"],
+            name=user["name"],
+            email=user["email"],
+            phone=user["phone"],
+            role=user["role"],
+            created_at=user["created_at"]
+        )
+    )
+
 @api_router.post("/auth/login", response_model=TokenResponse)
 async def login(credentials: UserLogin):
     user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
