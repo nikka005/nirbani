@@ -596,7 +596,7 @@ const FarmerDetailPage = () => {
                                 <Milk className="w-4 h-4 text-emerald-600" /> {texts.milkType}
                             </p>
                             <div className="grid grid-cols-3 gap-2 mb-4">
-                                {[{value:'cow',en:'Cow',hi:'गाय'},{value:'buffalo',en:'Buffalo',hi:'भैंस'},{value:'mix',en:'Mix',hi:'मिक्स'}].map(mt => (
+                                {[{value:'cow',en:'Cow',hi:'गाय'},{value:'buffalo',en:'Buffalo',hi:'भैंस'},{value:'both',en:'Both',hi:'दोनों'}].map(mt => (
                                     <button key={mt.value} type="button"
                                         onClick={() => setEditData(p => ({...p, milk_type: mt.value}))}
                                         data-testid={`edit-milk-type-${mt.value}`}
@@ -605,12 +605,29 @@ const FarmerDetailPage = () => {
                                         )}>{language === 'hi' ? mt.hi : mt.en}</button>
                                 ))}
                             </div>
-                            <div className="space-y-2">
-                                <Label>{texts.fixedRate}</Label>
-                                <Input type="number" step="0.5" value={editData.fixed_rate}
-                                    onChange={(e) => setEditData(p => ({...p, fixed_rate: e.target.value}))}
-                                    data-testid="edit-farmer-fixed-rate" className="h-12" />
-                            </div>
+                            {editData.milk_type === 'both' ? (
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-2">
+                                        <Label className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500"></span>{language === 'hi' ? 'गाय दर (₹/L)' : 'Cow Rate (₹/L)'}</Label>
+                                        <Input type="number" step="0.5" value={editData.cow_rate}
+                                            onChange={(e) => setEditData(p => ({...p, cow_rate: e.target.value}))}
+                                            data-testid="edit-farmer-cow-rate" className="h-12" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-zinc-700"></span>{language === 'hi' ? 'भैंस दर (₹/L)' : 'Buffalo Rate (₹/L)'}</Label>
+                                        <Input type="number" step="0.5" value={editData.buffalo_rate}
+                                            onChange={(e) => setEditData(p => ({...p, buffalo_rate: e.target.value}))}
+                                            data-testid="edit-farmer-buffalo-rate" className="h-12" />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    <Label>{texts.fixedRate}</Label>
+                                    <Input type="number" step="0.5" value={editData.fixed_rate}
+                                        onChange={(e) => setEditData(p => ({...p, fixed_rate: e.target.value}))}
+                                        data-testid="edit-farmer-fixed-rate" className="h-12" />
+                                </div>
+                            )}
                         </div>
                         <div className="border-t pt-4">
                             <p className="text-sm font-semibold text-zinc-700 mb-3">{texts.bankDetails}</p>
