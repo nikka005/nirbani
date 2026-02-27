@@ -33,6 +33,7 @@ const CollectionPage = () => {
     const [selectedDate, setSelectedDate] = useState(getTodayDate());
     const [formShift, setFormShift] = useState('morning');
     const [formData, setFormData] = useState({ farmer_id: '', quantity: '', fat: '', snf: '' });
+    const [collectionMilkType, setCollectionMilkType] = useState('cow');
 
     const t = (en, hi) => language === 'hi' ? hi : en;
 
