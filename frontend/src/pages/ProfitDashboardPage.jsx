@@ -61,11 +61,11 @@ const ProfitDashboardPage = () => {
                     <h1 className="font-heading text-xl sm:text-2xl font-bold text-zinc-900">{t('Profit Dashboard', 'लाभ डैशबोर्ड')}</h1>
                     <p className="text-xs sm:text-sm text-muted-foreground">{t('Real profit analysis', 'वास्तविक लाभ विश्लेषण')}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-9 w-auto text-sm" data-testid="profit-start-date" />
-                    <span className="text-zinc-400">-</span>
-                    <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-9 w-auto text-sm" data-testid="profit-end-date" />
-                    <Button variant="outline" onClick={handlePrintReport} data-testid="print-profit" className="h-9">
+                <div className="flex items-center gap-2 flex-wrap">
+                    <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-9 w-32 sm:w-auto text-xs sm:text-sm" data-testid="profit-start-date" />
+                    <span className="text-zinc-400 text-xs">-</span>
+                    <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-9 w-32 sm:w-auto text-xs sm:text-sm" data-testid="profit-end-date" />
+                    <Button variant="outline" onClick={handlePrintReport} data-testid="print-profit" className="h-9 text-xs sm:text-sm">
                         <Printer className="w-4 h-4 mr-1" />{t('Print', 'प्रिंट')}
                     </Button>
                 </div>
