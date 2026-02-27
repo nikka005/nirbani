@@ -17,8 +17,8 @@ BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 class TestAuthRegister:
     """Test that self-registration is disabled"""
     
-    def test_register_without_auth_returns_401(self):
-        """POST /api/auth/register without token should return 401"""
+    def test_register_without_auth_returns_403(self):
+        """POST /api/auth/register without token should return 403 (Not authenticated)"""
         response = requests.post(f"{BASE_URL}/api/auth/register", json={
             "name": "Unauth User",
             "email": "unauth@test.com",
@@ -26,7 +26,8 @@ class TestAuthRegister:
             "password": "test123",
             "role": "staff"
         })
-        assert response.status_code == 401
+        # FastAPI HTTPBearer returns 403 when no credentials provided
+        assert response.status_code == 403
         assert "Not authenticated" in response.json().get("detail", "")
     
     def test_register_with_admin_token_succeeds(self, admin_token):
