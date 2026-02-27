@@ -3610,6 +3610,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+async def seed_admin_user():
+    admin_email = "nirbanidairy@gmal.com"
+    existing = await db.users.find_one({"email": admin_email}, {"_id": 0})
+    if not existing:
+        admin_doc = {
+            "id": str(uuid.uuid4()),
+            "name": "Nirbani Admin",
+            "email": admin_email,
+            "phone": "0000000000",
+            "password": hash_password("Nirbani0056!"),
+            "role": "admin",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "is_active": True
+        }
+        await db.users.insert_one(admin_doc)
+        logger.info("Admin user seeded successfully")
+    else:
+        if existing.get("role") != "admin":
+            await db.users.update_one({"email": admin_email}, {"$set": {"role": "admin"}})
+            logger.info("Admin role updated for existing user")
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
