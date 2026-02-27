@@ -1285,27 +1285,127 @@ async def get_today_sales(current_user: dict = Depends(get_current_user)):
 
 @api_router.post("/sales/shop")
 async def create_shop_sale(sale: ShopSaleCreate, current_user: dict = Depends(get_current_user)):
-    """Quick shop/counter milk sale - no customer account needed"""
+    """Quick shop/counter milk sale - supports udhar (credit)"""
     sale_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
     date_str = now.strftime("%Y-%m-%d")
     amount = round(sale.quantity * sale.rate, 2)
+    
+    customer_name = sale.customer_name or "Walk-in"
+    
+    # If udhar, validate walk-in customer exists
+    if sale.is_udhar and sale.walkin_customer_id:
+        wc = await db.walkin_customers.find_one({"id": sale.walkin_customer_id}, {"_id": 0})
+        if wc:
+            customer_name = wc["name"]
+    
     sale_doc = {
         "id": sale_id,
-        "customer_id": "shop_walk_in",
-        "customer_name": sale.customer_name or "Walk-in",
+        "customer_id": sale.walkin_customer_id or "shop_walk_in",
+        "customer_name": customer_name,
         "product": sale.product,
         "quantity": sale.quantity,
         "rate": sale.rate,
         "amount": amount,
         "notes": sale.notes or "",
         "is_shop_sale": True,
+        "is_udhar": sale.is_udhar,
         "date": date_str,
         "created_at": now.isoformat()
     }
     await db.sales.insert_one(sale_doc)
     del sale_doc["_id"]
+    
+    # Update walk-in customer balance if udhar
+    if sale.is_udhar and sale.walkin_customer_id:
+        await db.walkin_customers.update_one(
+            {"id": sale.walkin_customer_id},
+            {"$inc": {"pending_amount": amount}}
+        )
+    
     return sale_doc
+
+# ==================== WALK-IN CUSTOMER & UDHAR ROUTES ====================
+
+@api_router.post("/walkin-customers")
+async def create_walkin_customer(data: WalkinCustomerCreate, current_user: dict = Depends(get_current_user)):
+    existing = await db.walkin_customers.find_one({"phone": data.phone}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="Customer with this phone already exists")
+    
+    cust_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    doc = {
+        "id": cust_id,
+        "name": data.name,
+        "phone": data.phone,
+        "pending_amount": 0,
+        "total_purchases": 0,
+        "total_paid": 0,
+        "created_at": now,
+        "is_active": True
+    }
+    await db.walkin_customers.insert_one(doc)
+    del doc["_id"]
+    return doc
+
+@api_router.get("/walkin-customers")
+async def get_walkin_customers(current_user: dict = Depends(get_current_user)):
+    customers = await db.walkin_customers.find({}, {"_id": 0}).sort("name", 1).to_list(1000)
+    return customers
+
+@api_router.get("/walkin-customers/{customer_id}")
+async def get_walkin_customer_detail(customer_id: str, current_user: dict = Depends(get_current_user)):
+    customer = await db.walkin_customers.find_one({"id": customer_id}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    # Get all udhar sales
+    sales = await db.sales.find(
+        {"customer_id": customer_id, "is_udhar": True},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(1000)
+    
+    # Get all payments
+    payments = await db.udhar_payments.find(
+        {"walkin_customer_id": customer_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(1000)
+    
+    return {
+        "customer": customer,
+        "sales": sales,
+        "payments": payments
+    }
+
+@api_router.post("/udhar-payments")
+async def record_udhar_payment(payment: UdharPaymentCreate, current_user: dict = Depends(get_current_user)):
+    customer = await db.walkin_customers.find_one({"id": payment.walkin_customer_id}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    payment_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+    doc = {
+        "id": payment_id,
+        "walkin_customer_id": payment.walkin_customer_id,
+        "amount": payment.amount,
+        "notes": payment.notes or "",
+        "date": now.strftime("%Y-%m-%d"),
+        "created_at": now.isoformat()
+    }
+    await db.udhar_payments.insert_one(doc)
+    del doc["_id"]
+    
+    # Update customer balance
+    await db.walkin_customers.update_one(
+        {"id": payment.walkin_customer_id},
+        {
+            "$inc": {"pending_amount": -payment.amount, "total_paid": payment.amount}
+        }
+    )
+    
+    return doc
 
 # ==================== CUSTOMER BILLING ROUTES ====================
 
