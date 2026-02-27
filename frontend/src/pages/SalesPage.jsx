@@ -203,7 +203,7 @@ const SalesPage = () => {
     };
 
     const handleQuickSale = (product) => {
-        setShopForm({ customer_name: '', product: product.value, quantity: '', rate: '', is_udhar: false, walkin_customer_id: '' });
+        setShopForm({ customer_name: '', product: product.value, quantity: '', rate: '', direct_amount: '', is_udhar: false, walkin_customer_id: '', mode: 'direct' });
         setShowShopSale(true);
     };
 
