@@ -503,8 +503,11 @@ def calculate_snf(fat: float) -> float:
 # ==================== AUTH ROUTES ====================
 
 @api_router.post("/auth/register", response_model=TokenResponse)
-async def register(user: UserCreate):
-    # Check if user exists
+async def register(user: UserCreate, current_user: dict = Depends(get_current_user)):
+    # Only admin can create new users
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can create users")
+    
     existing = await db.users.find_one({"email": user.email}, {"_id": 0})
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -538,6 +541,60 @@ async def register(user: UserCreate):
             created_at=now
         )
     )
+
+# ==================== ADMIN USER MANAGEMENT ====================
+
+@api_router.get("/users")
+async def get_users(current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can view users")
+    users = await db.users.find({}, {"_id": 0, "password": 0}).sort("created_at", -1).to_list(1000)
+    return users
+
+@api_router.put("/users/{user_id}")
+async def update_user(user_id: str, updates: dict, current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can update users")
+    
+    allowed_fields = {"name", "phone", "role", "is_active"}
+    update_data = {k: v for k, v in updates.items() if k in allowed_fields}
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+    
+    result = await db.users.update_one({"id": user_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    updated = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0})
+    return updated
+
+@api_router.put("/users/{user_id}/reset-password")
+async def reset_user_password(user_id: str, body: dict, current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can reset passwords")
+    
+    new_password = body.get("password")
+    if not new_password or len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    
+    result = await db.users.update_one({"id": user_id}, {"$set": {"password": hash_password(new_password)}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {"message": "Password reset successful"}
+
+@api_router.delete("/users/{user_id}")
+async def delete_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can delete users")
+    if user_id == current_user["id"]:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    
+    result = await db.users.delete_one({"id": user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "User deleted"}
 
 @api_router.post("/auth/login", response_model=TokenResponse)
 async def login(credentials: UserLogin):
