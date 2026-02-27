@@ -6,7 +6,7 @@ Complete Dairy Management Software (Web PWA) for Indian dairy businesses with bi
 ## Key Features
 1. Daily Milk Collection (dual cow/buffalo, auto shift)
 2. Farmer Management (CRUD, dual milk types)
-3. Customer Milk Sale System
+3. Customer Milk Sale System with searchable dropdown
 4. Inventory & Product Management
 5. Fat & SNF Rate Management
 6. Billing & Printing (ReportLab PDFs)
@@ -18,20 +18,15 @@ Complete Dairy Management Software (Web PWA) for Indian dairy businesses with bi
 12. Shop Sales with Udhar (Credit) System
 13. Separate Admin Panel (`/backman/*`)
 14. Direct Amount entry for all sales
-15. **Bulk Orders** for Hotels, Caterers, Halwai with customer search
+15. Bulk Orders for Hotels, Caterers, Halwai with customer search
+16. **Searchable customer dropdowns** in all sale dialogs
 
 ## Recent Updates (Feb 27, 2026)
-- Bulk Orders page with CRUD, status tracking, customer search auto-fill
-- Customer types: Hotel, Caterer, Halwai, Other
+- Searchable customer dropdowns in Customer Sale and Udhar selection
+- Bulk Orders page with customer search auto-fill
 - Direct Amount entry in all sale dialogs
 - Udhar (Credit) system for walk-in customers
 - Separate Admin Panel, default language English
-
-## DB Collections
-- `users`, `farmers`, `milk_collections`, `customers`, `sales`
-- `walkin_customers`, `udhar_payments`
-- `bulk_orders`: {customer_name, customer_phone, customer_type, product, quantity, rate, amount, status, date}
-- `dairy_plants`, `dispatches`, `dairy_payments`
 
 ## Credentials
 - Admin: nirbanidairy@gmal.com / Nirbani0056!
