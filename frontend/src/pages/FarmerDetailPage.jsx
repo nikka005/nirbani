@@ -55,7 +55,7 @@ const FarmerDetailPage = () => {
     const [editData, setEditData] = useState({
         name: '', phone: '', village: '', address: '',
         bank_account: '', ifsc_code: '', aadhar_number: '',
-        milk_type: 'cow', fixed_rate: '',
+        milk_type: 'cow', fixed_rate: '', cow_rate: '', buffalo_rate: '',
     });
 
     const [paymentData, setPaymentData] = useState({
