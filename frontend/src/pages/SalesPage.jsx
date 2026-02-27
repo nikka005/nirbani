@@ -122,8 +122,10 @@ const SalesPage = () => {
 
     const handleShopSale = async (e) => {
         e.preventDefault();
-        if (!shopForm.quantity || !shopForm.rate) {
-            toast.error(t('Fill quantity and rate', 'मात्रा और दर भरें')); return;
+        if (shopForm.mode === 'direct') {
+            if (!shopForm.direct_amount) { toast.error(t('Enter amount', 'राशि दर्ज करें')); return; }
+        } else {
+            if (!shopForm.quantity || !shopForm.rate) { toast.error(t('Fill quantity and rate', 'मात्रा और दर भरें')); return; }
         }
         if (shopForm.is_udhar && !shopForm.walkin_customer_id) {
             toast.error(t('Select customer for Udhar', 'उधार के लिए ग्राहक चुनें')); return;
@@ -133,12 +135,13 @@ const SalesPage = () => {
             await axios.post(`${BACKEND_URL}/api/sales/shop`, {
                 customer_name: shopForm.customer_name || 'Walk-in',
                 product: shopForm.product,
-                quantity: parseFloat(shopForm.quantity),
-                rate: parseFloat(shopForm.rate),
+                quantity: shopForm.quantity ? parseFloat(shopForm.quantity) : 0,
+                rate: shopForm.rate ? parseFloat(shopForm.rate) : 0,
+                direct_amount: shopForm.direct_amount ? parseFloat(shopForm.direct_amount) : null,
                 is_udhar: shopForm.is_udhar,
                 walkin_customer_id: shopForm.walkin_customer_id || null,
             }, { headers });
-            setShopForm({ customer_name: '', product: 'milk', quantity: '', rate: '', is_udhar: false, walkin_customer_id: '' });
+            setShopForm({ customer_name: '', product: 'milk', quantity: '', rate: '', direct_amount: '', is_udhar: false, walkin_customer_id: '', mode: 'direct' });
             setShowShopSale(false);
             toast.success(shopForm.is_udhar ? t('Udhar recorded!', 'उधार दर्ज हुआ!') : t('Shop sale recorded!', 'दुकान बिक्री दर्ज हुई!'));
             fetchData();
