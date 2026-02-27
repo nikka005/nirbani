@@ -122,6 +122,8 @@ class FarmerUpdate(BaseModel):
     is_active: Optional[bool] = None
     milk_type: Optional[str] = None
     fixed_rate: Optional[float] = None
+    cow_rate: Optional[float] = None
+    buffalo_rate: Optional[float] = None
 
 # Milk Collection Models
 class MilkCollectionCreate(BaseModel):
