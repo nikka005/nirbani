@@ -102,6 +102,8 @@ class FarmerResponse(BaseModel):
     aadhar_number: str
     milk_type: str = "cow"
     fixed_rate: Optional[float] = None
+    cow_rate: Optional[float] = None
+    buffalo_rate: Optional[float] = None
     total_milk: float
     total_due: float
     total_paid: float
