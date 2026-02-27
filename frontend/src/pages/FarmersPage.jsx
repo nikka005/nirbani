@@ -330,19 +330,39 @@ const FarmersPage = () => {
                                     </button>
                                 ))}
                             </div>
-                            <div className="space-y-2">
-                                <Label className="font-hindi">{texts.fixedRate}</Label>
-                                <Input
-                                    type="number"
-                                    step="0.5"
-                                    value={formData.fixed_rate}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, fixed_rate: e.target.value }))}
-                                    data-testid="farmer-fixed-rate-input"
-                                    placeholder={language === 'hi' ? 'उदा: 35' : 'e.g. 35'}
-                                    className="h-12"
-                                />
-                                <p className="text-xs text-zinc-500">{texts.fixedRateHint}</p>
-                            </div>
+
+                            {/* Rate fields based on milk type */}
+                            {formData.milk_type === 'both' ? (
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-2">
+                                        <Label className="font-hindi text-sm flex items-center gap-1">
+                                            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                                            {language === 'hi' ? 'गाय दर (₹/L)' : 'Cow Rate (₹/L)'}
+                                        </Label>
+                                        <Input type="number" step="0.5" value={formData.cow_rate}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, cow_rate: e.target.value }))}
+                                            data-testid="farmer-cow-rate" placeholder={language === 'hi' ? 'उदा: 35' : 'e.g. 35'} className="h-12" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="font-hindi text-sm flex items-center gap-1">
+                                            <span className="w-2 h-2 rounded-full bg-zinc-700"></span>
+                                            {language === 'hi' ? 'भैंस दर (₹/L)' : 'Buffalo Rate (₹/L)'}
+                                        </Label>
+                                        <Input type="number" step="0.5" value={formData.buffalo_rate}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, buffalo_rate: e.target.value }))}
+                                            data-testid="farmer-buffalo-rate" placeholder={language === 'hi' ? 'उदा: 50' : 'e.g. 50'} className="h-12" />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    <Label className="font-hindi">{texts.fixedRate}</Label>
+                                    <Input type="number" step="0.5" value={formData.fixed_rate}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, fixed_rate: e.target.value }))}
+                                        data-testid="farmer-fixed-rate-input"
+                                        placeholder={language === 'hi' ? 'उदा: 35' : 'e.g. 35'} className="h-12" />
+                                    <p className="text-xs text-zinc-500">{texts.fixedRateHint}</p>
+                                </div>
+                            )}
                         </div>
 
                         <div className="space-y-2">
