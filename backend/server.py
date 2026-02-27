@@ -233,6 +233,17 @@ class ShopSaleCreate(BaseModel):
     quantity: float
     rate: float
     notes: Optional[str] = ""
+    is_udhar: bool = False
+    walkin_customer_id: Optional[str] = None
+
+class WalkinCustomerCreate(BaseModel):
+    name: str
+    phone: str
+
+class UdharPaymentCreate(BaseModel):
+    walkin_customer_id: str
+    amount: float
+    notes: Optional[str] = ""
 
 class SaleResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
