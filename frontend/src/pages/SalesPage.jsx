@@ -626,24 +626,57 @@ const SalesPage = () => {
                                 <SelectContent>{productOptions.map(p => <SelectItem key={p.value} value={p.value}>{p.icon} {p.label}</SelectItem>)}</SelectContent>
                             </Select>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>{t('Quantity', 'मात्रा')} *</Label>
-                                <Input type="number" step="0.1" value={saleForm.quantity}
-                                    onChange={(e) => setSaleForm(p => ({...p, quantity: e.target.value}))}
-                                    className="h-12 text-lg" data-testid="sale-quantity" required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>{t('Rate (₹)', 'दर (₹)')} *</Label>
-                                <Input type="number" step="0.5" value={saleForm.rate}
-                                    onChange={(e) => setSaleForm(p => ({...p, rate: e.target.value}))}
-                                    className="h-12 text-lg" data-testid="sale-rate" required />
-                            </div>
+
+                        {/* Amount Mode Toggle */}
+                        <div className="flex gap-2">
+                            <button type="button" data-testid="sale-mode-direct"
+                                onClick={() => setSaleForm(p => ({ ...p, mode: 'direct', quantity: '', rate: '' }))}
+                                className={cn("flex-1 py-2 rounded-lg border text-xs font-semibold transition-all",
+                                    saleForm.mode === 'direct' ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-zinc-200 text-zinc-500")}>
+                                {t('Direct Amount', 'सीधी राशि')}
+                            </button>
+                            <button type="button" data-testid="sale-mode-qtyrate"
+                                onClick={() => setSaleForm(p => ({ ...p, mode: 'qtyrate', direct_amount: '' }))}
+                                className={cn("flex-1 py-2 rounded-lg border text-xs font-semibold transition-all",
+                                    saleForm.mode === 'qtyrate' ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-zinc-200 text-zinc-500")}>
+                                {t('Qty × Rate', 'मात्रा × दर')}
+                            </button>
                         </div>
-                        {saleForm.quantity && saleForm.rate && (
+
+                        {saleForm.mode === 'direct' ? (
+                            <div className="space-y-2">
+                                <Label>{t('Amount (₹)', 'राशि (₹)')} *</Label>
+                                <Input type="number" step="0.5" value={saleForm.direct_amount}
+                                    onChange={(e) => setSaleForm(p => ({...p, direct_amount: e.target.value}))}
+                                    className="h-14 text-2xl text-center font-bold" data-testid="sale-direct-amount"
+                                    placeholder="₹ 0" />
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>{t('Quantity', 'मात्रा')} *</Label>
+                                    <Input type="number" step="0.1" value={saleForm.quantity}
+                                        onChange={(e) => setSaleForm(p => ({...p, quantity: e.target.value}))}
+                                        className="h-12 text-lg" data-testid="sale-quantity" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>{t('Rate (₹)', 'दर (₹)')} *</Label>
+                                    <Input type="number" step="0.5" value={saleForm.rate}
+                                        onChange={(e) => setSaleForm(p => ({...p, rate: e.target.value}))}
+                                        className="h-12 text-lg" data-testid="sale-rate" />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Total Display */}
+                        {((saleForm.mode === 'direct' && saleForm.direct_amount) || (saleForm.mode === 'qtyrate' && saleForm.quantity && saleForm.rate)) && (
                             <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
                                 <span className="text-sm text-emerald-600">{t('Total', 'कुल')}:</span>
-                                <span className="text-xl font-bold text-emerald-700 ml-2">₹{(parseFloat(saleForm.quantity || 0) * parseFloat(saleForm.rate || 0)).toFixed(2)}</span>
+                                <span className="text-xl font-bold text-emerald-700 ml-2">
+                                    ₹{saleForm.mode === 'direct'
+                                        ? parseFloat(saleForm.direct_amount || 0).toFixed(2)
+                                        : (parseFloat(saleForm.quantity || 0) * parseFloat(saleForm.rate || 0)).toFixed(2)}
+                                </span>
                             </div>
                         )}
                         <Button type="submit" className="w-full h-12 bg-emerald-700 hover:bg-emerald-800" disabled={submitting} data-testid="submit-sale">
