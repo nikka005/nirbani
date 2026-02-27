@@ -1,7 +1,7 @@
 # Nirbani Dairy Management System - PRD
 
 ## Original Problem Statement
-Complete Dairy Management Software (Web PWA) for Indian dairy businesses. Handles milk collection, fat/SNF calculation, farmer payments, customer billing, SMS alerts, inventory, bulk dairy plant sales, and shop sales — all automated with bilingual (English/Hindi) UI.
+Complete Dairy Management Software (Web PWA) for Indian dairy businesses. Handles milk collection, fat/SNF calculation, farmer payments, customer billing, SMS alerts, inventory, bulk dairy plant sales, shop sales with udhar (credit) tracking — all automated with bilingual (English/Hindi) UI.
 
 ## Tech Stack
 - **Frontend**: React, Tailwind CSS, Shadcn/UI, Recharts, PWA
@@ -17,64 +17,58 @@ Complete Dairy Management Software (Web PWA) for Indian dairy businesses. Handle
 │   ├── sms_service.py   
 │   └── bill_service.py  
 └── frontend/src/
-    ├── App.js           # Routes: user site + admin panel
+    ├── App.js           # Routes: user site + /backman admin panel
     ├── context/AuthContext.js  # Default language: English
-    ├── components/layout/MainLayout.jsx  # User site nav
-    ├── pages/           # User site pages
+    ├── pages/
     │   ├── LoginPage.jsx       # Login only (no register)
     │   ├── CollectionPage.jsx  # Auto shift detection
-    │   ├── FarmersPage.jsx     # Dual milk type support
-    │   ├── UsersPage.jsx       # User management (admin panel)
+    │   ├── SalesPage.jsx       # Shop sales + Udhar + Customers
+    │   ├── UsersPage.jsx       # Admin user management
     │   └── admin/
-    │       ├── AdminLoginPage.jsx    # /backman/login
-    │       ├── AdminLayout.jsx       # Dark theme layout
-    │       └── AdminDashboardPage.jsx # Stats overview
+    │       ├── AdminLoginPage.jsx
+    │       ├── AdminLayout.jsx
+    │       └── AdminDashboardPage.jsx
     └── ...
 ```
 
-## Admin Panel (/backman/*)
-- **Login**: `/backman/login` — Admin-only login (checks role=admin)
-- **Dashboard**: `/backman` — System stats overview
-- **User Management**: `/backman/users` — Create, deactivate, reset password, delete users
-- **Credentials**: nirbanidairy@gmal.com / Nirbani0056! (seeded on startup)
-- **Theme**: Dark (zinc-950) with amber accents
-- **Session**: Uses `admin_token` in localStorage (separate from user `auth_token`)
+## Key Features (Feb 27, 2026)
+1. **Separate Admin Panel** at `/backman/*` with dark theme
+2. **Default Language: English** (Hindi toggle available)
+3. **Self-registration disabled** — admin creates users
+4. **Auto Shift Detection** — Morning/Evening based on time
+5. **Shop Sale Udhar (Credit) System**:
+   - Walk-in customers saved with name + phone
+   - Cash/Udhar toggle on shop sale dialog
+   - Track pending amount per customer
+   - Record payments against credit
+   - Full ledger/history per customer
+6. All existing modules: Collection, Farmers, Customers, Payments, Reports, etc.
 
-## User Site (/)
-- Login only (no self-registration)
-- Default language: English (toggle available)
-- No admin features visible
-- Message: "Contact admin for login credentials"
+## Key DB Collections
+- `users`: {id, name, email, phone, password, role, is_active}
+- `walkin_customers`: {id, name, phone, pending_amount, total_purchases, total_paid}
+- `udhar_payments`: {id, walkin_customer_id, amount, notes, date}
+- `sales`: {..., is_shop_sale, is_udhar, customer_id (walkin_customer_id for udhar)}
+- `farmers`, `milk_collections`, `customers`, `dairy_plants`, `dispatches`, `dairy_payments`
 
 ## Key API Endpoints
-- POST /api/admin/login (admin-only login, rejects non-admin)
-- POST /api/auth/login (user login)
-- POST /api/auth/register (admin-only, creates users)
-- GET /api/users (admin-only)
-- PUT /api/users/{id} (admin-only)
-- PUT /api/users/{id}/reset-password (admin-only)
-- DELETE /api/users/{id} (admin-only)
-
-## Key DB Schema
-- `users`: {id, name, email, phone, password, role (admin/staff), is_active, created_at}
-- `farmers`: {..., milk_types, cow_rate, buffalo_rate}
-- `milk_collections`: {..., milk_type}
-- `dairy_plants`, `dispatches`, `dairy_payments`, `sales`
+- POST /api/admin/login (admin-only login)
+- POST/GET /api/walkin-customers
+- GET /api/walkin-customers/{id} (detail + ledger)
+- POST /api/udhar-payments
+- POST /api/sales/shop (updated with is_udhar + walkin_customer_id)
+- POST /api/auth/register (admin-only)
+- GET/PUT/DELETE /api/users
 
 ## Known Technical Debt
-- backend/server.py is monolithic — needs refactoring into /routers, /models, /services
+- backend/server.py is monolithic — needs refactoring
 
 ## Upcoming Tasks
 - P2: Customer Subscription System (monthly auto-billing)
-- P2: DLT Registration Guide (SMS compliance for India)
+- P2: DLT Registration Guide (SMS compliance)
 - P3: Software Licensing System
 - Backend refactoring
 
-## Integrations
-- MSG91 SMS: Code exists, inactive (needs user API key)
-- ReportLab: Active for PDF generation
-- OpenAI GPT-4o: Active for Rate Chart OCR
-
-## Test Credentials
+## Credentials
 - Admin: nirbanidairy@gmal.com / Nirbani0056!
 - Staff: newstaff@dairy.com / staff123
