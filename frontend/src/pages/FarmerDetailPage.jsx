@@ -176,6 +176,8 @@ const FarmerDetailPage = () => {
             const payload = {
                 ...editData,
                 fixed_rate: editData.fixed_rate ? parseFloat(editData.fixed_rate) : null,
+                cow_rate: editData.cow_rate ? parseFloat(editData.cow_rate) : null,
+                buffalo_rate: editData.buffalo_rate ? parseFloat(editData.buffalo_rate) : null,
             };
             await farmerAPI.update(id, payload);
             setShowEditDialog(false);
