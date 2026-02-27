@@ -126,6 +126,7 @@ const CollectionPage = () => {
                 quantity: parseFloat(formData.quantity),
                 fat: hasFixedRate ? 0 : parseFloat(formData.fat),
                 snf: hasFixedRate ? 0 : (formData.snf ? parseFloat(formData.snf) : null),
+                milk_type: isBothType ? collectionMilkType : undefined,
             });
             setAllCollections(prev => [response.data, ...prev]);
             setFormData({ farmer_id: '', quantity: '', fat: '', snf: '' });
