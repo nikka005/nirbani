@@ -85,8 +85,10 @@ class FarmerCreate(BaseModel):
     bank_account: Optional[str] = ""
     ifsc_code: Optional[str] = ""
     aadhar_number: Optional[str] = ""
-    milk_type: Optional[str] = "cow"  # cow, buffalo, mix
-    fixed_rate: Optional[float] = None  # if set, use this rate instead of rate chart
+    milk_type: Optional[str] = "cow"  # cow, buffalo, both
+    fixed_rate: Optional[float] = None  # legacy single rate
+    cow_rate: Optional[float] = None
+    buffalo_rate: Optional[float] = None
 
 class FarmerResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
