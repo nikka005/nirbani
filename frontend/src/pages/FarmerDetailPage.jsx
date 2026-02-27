@@ -158,6 +158,8 @@ const FarmerDetailPage = () => {
                 aadhar_number: farmer.aadhar_number || '',
                 milk_type: farmer.milk_type || 'cow',
                 fixed_rate: farmer.fixed_rate || '',
+                cow_rate: farmer.cow_rate || '',
+                buffalo_rate: farmer.buffalo_rate || '',
             });
             setShowEditDialog(true);
         }
