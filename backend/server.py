@@ -733,9 +733,17 @@ async def create_collection(
     snf = collection.snf if collection.snf else calculate_snf(collection.fat)
     
     # Use fixed rate if farmer has one, otherwise use rate chart
-    if farmer.get("fixed_rate") and farmer["fixed_rate"] > 0:
+    # Support both cow_rate and buffalo_rate for farmers with both types
+    milk_type = collection.milk_type or farmer.get("milk_type", "cow")
+    rate = None
+    if milk_type == "buffalo" and farmer.get("buffalo_rate") and farmer["buffalo_rate"] > 0:
+        rate = farmer["buffalo_rate"]
+    elif milk_type == "cow" and farmer.get("cow_rate") and farmer["cow_rate"] > 0:
+        rate = farmer["cow_rate"]
+    elif farmer.get("fixed_rate") and farmer["fixed_rate"] > 0:
         rate = farmer["fixed_rate"]
-    else:
+    
+    if not rate:
         rate = await get_milk_rate(collection.fat, snf)
     
     # Determine milk type: from collection, or fallback to farmer's default
