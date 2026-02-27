@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -15,7 +14,6 @@ import axios from 'axios';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const UsersPage = () => {
-    const { language, user: currentUser } = useAuth();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showAddDialog, setShowAddDialog] = useState(false);
@@ -25,8 +23,8 @@ const UsersPage = () => {
     const [newPassword, setNewPassword] = useState('');
     const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '', role: 'staff' });
 
-    const t = (en, hi) => language === 'hi' ? hi : en;
-    const token = localStorage.getItem('auth_token');
+    const currentUser = JSON.parse(localStorage.getItem('admin_user') || '{}');
+    const token = localStorage.getItem('admin_token');
     const headers = { Authorization: `Bearer ${token}` };
 
     useEffect(() => { fetchUsers(); }, []);
