@@ -15,21 +15,22 @@ Complete Dairy Management Software (Web PWA) for Indian dairy businesses with bi
 9. Multi-Branch Management
 10. Reports & Analytics
 11. Bulk Milk Sale to Dairy Plant
-12. **Shop Sales with Udhar (Credit) System**
-13. **Separate Admin Panel** (`/backman/*`)
-14. **Direct Amount entry** for all sales
+12. Shop Sales with Udhar (Credit) System
+13. Separate Admin Panel (`/backman/*`)
+14. Direct Amount entry for all sales
+15. **Bulk Orders** for Hotels, Caterers, Halwai with customer search
 
 ## Recent Updates (Feb 27, 2026)
-- Direct Amount entry for Shop Sale + Customer Sale (no qty/rate needed)
+- Bulk Orders page with CRUD, status tracking, customer search auto-fill
+- Customer types: Hotel, Caterer, Halwai, Other
+- Direct Amount entry in all sale dialogs
 - Udhar (Credit) system for walk-in customers
-- Separate Admin Panel at /backman with dark theme
-- Default language: English
-- Self-registration disabled
+- Separate Admin Panel, default language English
 
 ## DB Collections
 - `users`, `farmers`, `milk_collections`, `customers`, `sales`
-- `walkin_customers`: {id, name, phone, pending_amount, total_paid}
-- `udhar_payments`: {id, walkin_customer_id, amount, date}
+- `walkin_customers`, `udhar_payments`
+- `bulk_orders`: {customer_name, customer_phone, customer_type, product, quantity, rate, amount, status, date}
 - `dairy_plants`, `dispatches`, `dairy_payments`
 
 ## Credentials
