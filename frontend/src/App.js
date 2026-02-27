@@ -23,6 +23,7 @@ import CustomerDetailPage from './pages/CustomerDetailPage';
 import DairyDispatchPage from './pages/DairyDispatchPage';
 import DairyLedgerPage from './pages/DairyLedgerPage';
 import ProfitDashboardPage from './pages/ProfitDashboardPage';
+import UsersPage from './pages/UsersPage';
 
 // Layout
 import MainLayout from './components/layout/MainLayout';
@@ -77,6 +78,7 @@ const AppRoutes = () => {
                 <Route path="dairy-dispatch" element={<DairyDispatchPage />} />
                 <Route path="dairy-ledger" element={<DairyLedgerPage />} />
                 <Route path="profit-dashboard" element={<ProfitDashboardPage />} />
+                <Route path="users" element={<UsersPage />} />
             </Route>
             
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { 
     LayoutDashboard, Milk, Users, Wallet, FileText, LogOut, Languages,
     ChartLine, Settings, ShoppingBag, Package, Receipt, Building2, Upload,
-    Menu, X, Truck, Factory, TrendingUp
+    Menu, X, Truck, Factory, TrendingUp, UserCog
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
@@ -29,6 +29,7 @@ const allNavItems = [
     { path: '/bulk-upload', icon: Upload, label: { en: 'Bulk Upload', hi: 'अपलोड' } },
     { path: '/rate-chart', icon: ChartLine, label: { en: 'Rate Chart', hi: 'दर चार्ट' } },
     { path: '/settings', icon: Settings, label: { en: 'Settings', hi: 'सेटिंग्स' } },
+    { path: '/users', icon: UserCog, label: { en: 'Users', hi: 'उपयोगकर्ता' }, adminOnly: true },
 ];
 
 // Bottom nav: only 5 main items
