@@ -223,15 +223,17 @@ class CustomerResponse(BaseModel):
 class SaleCreate(BaseModel):
     customer_id: str
     product: str  # milk, paneer, dahi, ghee, lassi
-    quantity: float
-    rate: float
+    quantity: Optional[float] = 0
+    rate: Optional[float] = 0
+    direct_amount: Optional[float] = None
     notes: Optional[str] = ""
 
 class ShopSaleCreate(BaseModel):
     customer_name: Optional[str] = "Walk-in"
     product: str = "milk"
-    quantity: float
-    rate: float
+    quantity: Optional[float] = 0
+    rate: Optional[float] = 0
+    direct_amount: Optional[float] = None
     notes: Optional[str] = ""
     is_udhar: bool = False
     walkin_customer_id: Optional[str] = None
