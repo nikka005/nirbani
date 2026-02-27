@@ -230,7 +230,7 @@ const DairyDispatchPage = () => {
                             <Weight className="w-4 h-4 text-emerald-600" />
                             <span className="text-xs text-emerald-600 font-semibold">{t('Collected (KG)', 'संग्रह (KG)')}</span>
                         </div>
-                        <p className="text-2xl font-bold text-emerald-700" data-testid="collected-kg">{todayCollectionStats.totalKg || 0}</p>
+                        <p className="text-lg sm:text-2xl font-bold text-emerald-700" data-testid="collected-kg">{todayCollectionStats.totalKg || 0}</p>
                         <p className="text-xs text-emerald-500">FAT: {todayCollectionStats.avgFat}%</p>
                     </CardContent>
                 </Card>
@@ -240,7 +240,7 @@ const DairyDispatchPage = () => {
                             <Truck className="w-4 h-4 text-blue-600" />
                             <span className="text-xs text-blue-600 font-semibold">{t('Dispatched (KG)', 'डिस्पैच (KG)')}</span>
                         </div>
-                        <p className="text-2xl font-bold text-blue-700" data-testid="dispatched-kg">{totalDispatchQty.toFixed(1)}</p>
+                        <p className="text-lg sm:text-2xl font-bold text-blue-700" data-testid="dispatched-kg">{totalDispatchQty.toFixed(1)}</p>
                         <p className="text-xs text-blue-500">{formatCurrency(totalDispatchAmount)}</p>
                     </CardContent>
                 </Card>
@@ -250,7 +250,7 @@ const DairyDispatchPage = () => {
                             {milkLossPercent > 1 ? <AlertTriangle className="w-4 h-4 text-red-600" /> : <Droplets className="w-4 h-4 text-amber-600" />}
                             <span className={cn("text-xs font-semibold", milkLossPercent > 1 ? "text-red-600" : "text-amber-600")}>{t('Milk Diff', 'दूध अंतर')}</span>
                         </div>
-                        <p className={cn("text-2xl font-bold", milkLossPercent > 1 ? "text-red-700" : "text-amber-700")} data-testid="milk-diff">{milkDiff.toFixed(1)} KG</p>
+                        <p className={cn("text-lg sm:text-2xl font-bold", milkLossPercent > 1 ? "text-red-700" : "text-amber-700")} data-testid="milk-diff">{milkDiff.toFixed(1)} KG</p>
                         <p className={cn("text-xs", milkLossPercent > 1 ? "text-red-500" : "text-amber-500")}>{milkLossPercent}% {milkLossPercent > 1 ? t('ALERT!', 'चेतावनी!') : ''}</p>
                     </CardContent>
                 </Card>
