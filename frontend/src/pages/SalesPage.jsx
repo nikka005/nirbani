@@ -541,26 +541,57 @@ const SalesPage = () => {
                                 <SelectContent>{productOptions.map(p => <SelectItem key={p.value} value={p.value}>{p.icon} {p.label}</SelectItem>)}</SelectContent>
                             </Select>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>{t('Quantity', 'मात्रा')} *</Label>
-                                <Input type="number" step="0.1" value={shopForm.quantity}
-                                    onChange={(e) => setShopForm(p => ({...p, quantity: e.target.value}))}
-                                    className="h-12 text-lg" data-testid="shop-quantity" required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>{t('Rate (₹)', 'दर (₹)')} *</Label>
-                                <Input type="number" step="0.5" value={shopForm.rate}
-                                    onChange={(e) => setShopForm(p => ({...p, rate: e.target.value}))}
-                                    className="h-12 text-lg" data-testid="shop-rate" required />
-                            </div>
+
+                        {/* Amount Mode Toggle */}
+                        <div className="flex gap-2">
+                            <button type="button" data-testid="shop-mode-direct"
+                                onClick={() => setShopForm(p => ({ ...p, mode: 'direct', quantity: '', rate: '' }))}
+                                className={cn("flex-1 py-2 rounded-lg border text-xs font-semibold transition-all",
+                                    shopForm.mode === 'direct' ? "border-amber-500 bg-amber-50 text-amber-700" : "border-zinc-200 text-zinc-500")}>
+                                {t('Direct Amount', 'सीधी राशि')}
+                            </button>
+                            <button type="button" data-testid="shop-mode-qtyrate"
+                                onClick={() => setShopForm(p => ({ ...p, mode: 'qtyrate', direct_amount: '' }))}
+                                className={cn("flex-1 py-2 rounded-lg border text-xs font-semibold transition-all",
+                                    shopForm.mode === 'qtyrate' ? "border-amber-500 bg-amber-50 text-amber-700" : "border-zinc-200 text-zinc-500")}>
+                                {t('Qty × Rate', 'मात्रा × दर')}
+                            </button>
                         </div>
-                        {shopForm.quantity && shopForm.rate && (
+
+                        {shopForm.mode === 'direct' ? (
+                            <div className="space-y-2">
+                                <Label>{t('Amount (₹)', 'राशि (₹)')} *</Label>
+                                <Input type="number" step="0.5" value={shopForm.direct_amount}
+                                    onChange={(e) => setShopForm(p => ({...p, direct_amount: e.target.value}))}
+                                    className="h-14 text-2xl text-center font-bold" data-testid="shop-direct-amount"
+                                    placeholder="₹ 0" />
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>{t('Quantity', 'मात्रा')} *</Label>
+                                    <Input type="number" step="0.1" value={shopForm.quantity}
+                                        onChange={(e) => setShopForm(p => ({...p, quantity: e.target.value}))}
+                                        className="h-12 text-lg" data-testid="shop-quantity" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>{t('Rate (₹)', 'दर (₹)')} *</Label>
+                                    <Input type="number" step="0.5" value={shopForm.rate}
+                                        onChange={(e) => setShopForm(p => ({...p, rate: e.target.value}))}
+                                        className="h-12 text-lg" data-testid="shop-rate" />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Total Display */}
+                        {((shopForm.mode === 'direct' && shopForm.direct_amount) || (shopForm.mode === 'qtyrate' && shopForm.quantity && shopForm.rate)) && (
                             <div className={cn("p-3 rounded-xl border text-center",
                                 shopForm.is_udhar ? "bg-red-50 border-red-200" : "bg-amber-50 border-amber-200")}>
                                 <span className={cn("text-sm", shopForm.is_udhar ? "text-red-600" : "text-amber-600")}>{t('Total', 'कुल')}:</span>
                                 <span className={cn("text-xl font-bold ml-2", shopForm.is_udhar ? "text-red-700" : "text-amber-700")}>
-                                    ₹{(parseFloat(shopForm.quantity || 0) * parseFloat(shopForm.rate || 0)).toFixed(2)}
+                                    ₹{shopForm.mode === 'direct'
+                                        ? parseFloat(shopForm.direct_amount || 0).toFixed(2)
+                                        : (parseFloat(shopForm.quantity || 0) * parseFloat(shopForm.rate || 0)).toFixed(2)}
                                 </span>
                                 {shopForm.is_udhar && <span className="block text-xs text-red-500 mt-1">{t('Will be added to Udhar', 'उधार में जुड़ेगा')}</span>}
                             </div>
