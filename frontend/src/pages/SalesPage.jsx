@@ -507,28 +507,53 @@ const SalesPage = () => {
 
                         {/* Customer Selection for Udhar */}
                         {shopForm.is_udhar ? (
-                            <div className="space-y-2">
+                            <div className="space-y-2 relative">
                                 <Label>{t('Customer', 'ग्राहक')} *</Label>
                                 <div className="flex gap-2">
-                                    <Select value={shopForm.walkin_customer_id} onValueChange={(v) => {
-                                        const wc = walkinCustomers.find(c => c.id === v);
-                                        setShopForm(p => ({ ...p, walkin_customer_id: v, customer_name: wc?.name || '' }));
-                                    }}>
-                                        <SelectTrigger className="h-12 flex-1" data-testid="udhar-customer-select">
-                                            <SelectValue placeholder={t('Select customer', 'ग्राहक चुनें')} />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {walkinCustomers.map(wc => (
-                                                <SelectItem key={wc.id} value={wc.id}>
-                                                    {wc.name} ({wc.phone}) {(wc.pending_amount || 0) > 0 ? `- ₹${wc.pending_amount}` : ''}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <div className="relative flex-1">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                                        <Input
+                                            value={udharCustSearch}
+                                            onChange={(e) => { setUdharCustSearch(e.target.value); setShowUdharCustDropdown(true); }}
+                                            onFocus={() => setShowUdharCustDropdown(true)}
+                                            placeholder={shopForm.walkin_customer_id ? walkinCustomers.find(c => c.id === shopForm.walkin_customer_id)?.name : t('Search customer...', 'ग्राहक खोजें...')}
+                                            className={cn("h-12 pl-10", shopForm.walkin_customer_id && "border-red-400 bg-red-50")}
+                                            data-testid="udhar-customer-search" />
+                                        {shopForm.walkin_customer_id && (
+                                            <button type="button" onClick={() => { setShopForm(p => ({...p, walkin_customer_id: '', customer_name: ''})); setUdharCustSearch(''); }}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 text-xs">✕</button>
+                                        )}
+                                    </div>
                                     <Button type="button" variant="outline" className="h-12 px-3" onClick={() => setShowAddWalkin(true)} data-testid="add-walkin-from-sale">
                                         <Plus className="w-4 h-4" />
                                     </Button>
                                 </div>
+                                {showUdharCustDropdown && (
+                                    <div className="absolute z-50 w-full bg-white border rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto">
+                                        {walkinCustomers.filter(c =>
+                                            !udharCustSearch || c.name?.toLowerCase().includes(udharCustSearch.toLowerCase()) || c.phone?.includes(udharCustSearch)
+                                        ).map(wc => (
+                                            <button key={wc.id} type="button" data-testid={`udhar-cust-${wc.id}`}
+                                                onClick={() => { setShopForm(p => ({...p, walkin_customer_id: wc.id, customer_name: wc.name})); setUdharCustSearch(''); setShowUdharCustDropdown(false); }}
+                                                className="w-full flex items-center gap-2 p-3 hover:bg-red-50 text-left border-b last:border-0">
+                                                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white",
+                                                    (wc.pending_amount || 0) > 0 ? "bg-red-500" : "bg-emerald-500")}>
+                                                    {wc.name?.charAt(0)?.toUpperCase()}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-semibold truncate">{wc.name}</p>
+                                                    <p className="text-[10px] text-zinc-500">{wc.phone}</p>
+                                                </div>
+                                                {(wc.pending_amount || 0) > 0 && (
+                                                    <span className="text-xs font-bold text-red-600">₹{wc.pending_amount}</span>
+                                                )}
+                                            </button>
+                                        ))}
+                                        {walkinCustomers.filter(c => !udharCustSearch || c.name?.toLowerCase().includes(udharCustSearch.toLowerCase()) || c.phone?.includes(udharCustSearch)).length === 0 && (
+                                            <p className="p-3 text-sm text-zinc-400 text-center">{t('No match', 'कोई मिलान नहीं')}</p>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="space-y-2">
