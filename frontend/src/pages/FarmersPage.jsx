@@ -113,6 +113,8 @@ const FarmersPage = () => {
             const payload = {
                 ...formData,
                 fixed_rate: formData.fixed_rate ? parseFloat(formData.fixed_rate) : null,
+                cow_rate: formData.cow_rate ? parseFloat(formData.cow_rate) : null,
+                buffalo_rate: formData.buffalo_rate ? parseFloat(formData.buffalo_rate) : null,
             };
             const response = await farmerAPI.create(payload);
             setFarmers(prev => [response.data, ...prev]);
@@ -126,6 +128,8 @@ const FarmersPage = () => {
                 aadhar_number: '',
                 milk_type: 'cow',
                 fixed_rate: '',
+                cow_rate: '',
+                buffalo_rate: '',
             });
             setShowAddDialog(false);
             toast.success(texts.success);
