@@ -247,6 +247,21 @@ class UdharPaymentCreate(BaseModel):
     amount: float
     notes: Optional[str] = ""
 
+# Bulk Order Models
+class BulkOrderCreate(BaseModel):
+    customer_name: str
+    customer_phone: str
+    customer_type: str = "hotel"  # hotel, caterer, halwai, other
+    product: str = "milk"
+    quantity: float = 0
+    rate: float = 0
+    direct_amount: Optional[float] = None
+    delivery_address: Optional[str] = ""
+    notes: Optional[str] = ""
+    is_recurring: bool = False
+    status: str = "pending"  # pending, delivered, cancelled
+
+
 class SaleResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str
