@@ -46,8 +46,8 @@ const SalesPage = () => {
     const [walkinDetail, setWalkinDetail] = useState(null);
 
     const [customerForm, setCustomerForm] = useState({ name: '', phone: '', address: '', customer_type: 'retail', gst_number: '' });
-    const [saleForm, setSaleForm] = useState({ customer_id: '', product: 'milk', quantity: '', rate: '' });
-    const [shopForm, setShopForm] = useState({ customer_name: '', product: 'milk', quantity: '', rate: '', is_udhar: false, walkin_customer_id: '' });
+    const [saleForm, setSaleForm] = useState({ customer_id: '', product: 'milk', quantity: '', rate: '', direct_amount: '', mode: 'direct' });
+    const [shopForm, setShopForm] = useState({ customer_name: '', product: 'milk', quantity: '', rate: '', direct_amount: '', is_udhar: false, walkin_customer_id: '', mode: 'direct' });
     const [walkinForm, setWalkinForm] = useState({ name: '', phone: '' });
     const [paymentAmount, setPaymentAmount] = useState('');
 
