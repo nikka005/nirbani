@@ -23,6 +23,7 @@ import CustomerDetailPage from './pages/CustomerDetailPage';
 import DairyDispatchPage from './pages/DairyDispatchPage';
 import DairyLedgerPage from './pages/DairyLedgerPage';
 import ProfitDashboardPage from './pages/ProfitDashboardPage';
+import BulkOrdersPage from './pages/BulkOrdersPage';
 
 // Admin Pages
 import AdminLoginPage from './pages/admin/AdminLoginPage';
@@ -83,6 +84,7 @@ const AppRoutes = () => {
                 <Route path="dairy-dispatch" element={<DairyDispatchPage />} />
                 <Route path="dairy-ledger" element={<DairyLedgerPage />} />
                 <Route path="profit-dashboard" element={<ProfitDashboardPage />} />
+                <Route path="bulk-orders" element={<BulkOrdersPage />} />
             </Route>
 
             {/* Admin Panel */}
