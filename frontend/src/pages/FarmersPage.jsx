@@ -54,6 +54,8 @@ const FarmersPage = () => {
         aadhar_number: '',
         milk_type: 'cow',
         fixed_rate: '',
+        cow_rate: '',
+        buffalo_rate: '',
     });
 
     const texts = {
