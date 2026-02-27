@@ -1215,15 +1215,23 @@ async def create_sale(sale: SaleCreate, current_user: dict = Depends(get_current
     sale_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
     date_str = now.strftime("%Y-%m-%d")
-    amount = round(sale.quantity * sale.rate, 2)
+    
+    if sale.direct_amount and sale.direct_amount > 0:
+        amount = round(sale.direct_amount, 2)
+        quantity = sale.quantity or 0
+        rate = sale.rate or 0
+    else:
+        quantity = sale.quantity or 0
+        rate = sale.rate or 0
+        amount = round(quantity * rate, 2)
     
     sale_doc = {
         "id": sale_id,
         "customer_id": sale.customer_id,
         "customer_name": customer["name"],
         "product": sale.product,
-        "quantity": sale.quantity,
-        "rate": sale.rate,
+        "quantity": quantity,
+        "rate": rate,
         "amount": amount,
         "notes": sale.notes or "",
         "date": date_str,
