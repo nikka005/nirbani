@@ -115,18 +115,18 @@ const ProfitDashboardPage = () => {
             {/* Margin per unit */}
             <Card>
                 <CardContent className="p-4">
-                    <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
                         <div>
-                            <p className="text-sm text-zinc-500">{t('Buying Rate (Avg)', 'खरीद दर (औसत)')}</p>
-                            <p className="text-xl font-bold text-amber-700">₹{coll.avg_rate || 0}/L</p>
+                            <p className="text-xs sm:text-sm text-zinc-500">{t('Buying Rate', 'खरीद दर')}</p>
+                            <p className="text-base sm:text-xl font-bold text-amber-700">₹{coll.avg_rate || 0}/L</p>
                         </div>
                         <div>
-                            <p className="text-sm text-zinc-500">{t('Selling Rate (Avg)', 'बिक्री दर (औसत)')}</p>
-                            <p className="text-xl font-bold text-blue-700">₹{disp.avg_rate || 0}/KG</p>
+                            <p className="text-xs sm:text-sm text-zinc-500">{t('Selling Rate', 'बिक्री दर')}</p>
+                            <p className="text-base sm:text-xl font-bold text-blue-700">₹{disp.avg_rate || 0}/KG</p>
                         </div>
                         <div>
-                            <p className="text-sm text-zinc-500">{t('Margin/Unit', 'मार्जिन/इकाई')}</p>
-                            <p className={cn("text-xl font-bold", (p.gross_margin_per_unit || 0) >= 0 ? "text-emerald-700" : "text-red-700")}>
+                            <p className="text-xs sm:text-sm text-zinc-500">{t('Margin', 'मार्जिन')}</p>
+                            <p className={cn("text-base sm:text-xl font-bold", (p.gross_margin_per_unit || 0) >= 0 ? "text-emerald-700" : "text-red-700")}>
                                 ₹{p.gross_margin_per_unit || 0}
                             </p>
                         </div>
