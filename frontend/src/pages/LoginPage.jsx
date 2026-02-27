@@ -5,32 +5,20 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Milk, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const LoginPage = () => {
     const navigate = useNavigate();
-    const { login, register, isAuthenticated } = useAuth();
-    const [activeTab, setActiveTab] = useState('login');
+    const { login, isAuthenticated } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    // Login form state
     const [loginData, setLoginData] = useState({
         email: '',
         password: '',
     });
 
-    // Register form state
-    const [registerData, setRegisterData] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        password: '',
-    });
-
-    // Redirect if already authenticated
     React.useEffect(() => {
         if (isAuthenticated) {
             navigate('/');
@@ -47,22 +35,6 @@ const LoginPage = () => {
         } catch (error) {
             toast.error('लॉगिन विफल', { 
                 description: error.response?.data?.detail || 'कृपया अपना ईमेल और पासवर्ड जांचें' 
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleRegister = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        try {
-            await register(registerData);
-            toast.success('रजिस्ट्रेशन सफल!', { description: 'आपका खाता बन गया है' });
-            navigate('/');
-        } catch (error) {
-            toast.error('रजिस्ट्रेशन विफल', { 
-                description: error.response?.data?.detail || 'कृपया सभी जानकारी सही भरें' 
             });
         } finally {
             setLoading(false);
@@ -115,163 +87,69 @@ const LoginPage = () => {
                             <Milk className="w-6 h-6 text-emerald-700" />
                         </div>
                         <CardTitle className="font-heading text-2xl">
-                            {activeTab === 'login' ? 'लॉगिन करें' : 'रजिस्टर करें'}
+                            लॉगिन करें
                         </CardTitle>
                         <CardDescription className="font-hindi">
-                            {activeTab === 'login' 
-                                ? 'अपने खाते में प्रवेश करें' 
-                                : 'नया खाता बनाएं'}
+                            अपने खाते में प्रवेश करें
                         </CardDescription>
                     </CardHeader>
                     
                     <CardContent>
-                        <Tabs value={activeTab} onValueChange={setActiveTab}>
-                            <TabsList className="grid w-full grid-cols-2 mb-6">
-                                <TabsTrigger value="login" data-testid="login-tab" className="font-hindi">
-                                    लॉगिन
-                                </TabsTrigger>
-                                <TabsTrigger value="register" data-testid="register-tab" className="font-hindi">
-                                    रजिस्टर
-                                </TabsTrigger>
-                            </TabsList>
-
-                            <TabsContent value="login">
-                                <form onSubmit={handleLogin} className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="login-email" className="font-hindi">ईमेल</Label>
-                                        <Input
-                                            id="login-email"
-                                            type="email"
-                                            data-testid="login-email"
-                                            placeholder="your@email.com"
-                                            value={loginData.email}
-                                            onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                                            required
-                                            className="h-12"
-                                        />
-                                    </div>
-                                    
-                                    <div className="space-y-2">
-                                        <Label htmlFor="login-password" className="font-hindi">पासवर्ड</Label>
-                                        <div className="relative">
-                                            <Input
-                                                id="login-password"
-                                                type={showPassword ? 'text' : 'password'}
-                                                data-testid="login-password"
-                                                placeholder="••••••••"
-                                                value={loginData.password}
-                                                onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                                                required
-                                                className="h-12 pr-10"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
-                                            >
-                                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <Button 
-                                        type="submit" 
-                                        data-testid="login-submit"
-                                        className="w-full h-12 bg-emerald-700 hover:bg-emerald-800 font-hindi text-base"
-                                        disabled={loading}
+                        <form onSubmit={handleLogin} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="login-email" className="font-hindi">ईमेल</Label>
+                                <Input
+                                    id="login-email"
+                                    type="email"
+                                    data-testid="login-email"
+                                    placeholder="your@email.com"
+                                    value={loginData.email}
+                                    onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                                    required
+                                    className="h-12"
+                                />
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <Label htmlFor="login-password" className="font-hindi">पासवर्ड</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="login-password"
+                                        type={showPassword ? 'text' : 'password'}
+                                        data-testid="login-password"
+                                        placeholder="********"
+                                        value={loginData.password}
+                                        onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                                        required
+                                        className="h-12 pr-10"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
                                     >
-                                        {loading ? (
-                                            <Loader2 className="w-5 h-5 animate-spin" />
-                                        ) : (
-                                            'लॉगिन करें'
-                                        )}
-                                    </Button>
-                                </form>
-                            </TabsContent>
+                                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                    </button>
+                                </div>
+                            </div>
 
-                            <TabsContent value="register">
-                                <form onSubmit={handleRegister} className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="register-name" className="font-hindi">नाम</Label>
-                                        <Input
-                                            id="register-name"
-                                            type="text"
-                                            data-testid="register-name"
-                                            placeholder="आपका नाम"
-                                            value={registerData.name}
-                                            onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
-                                            required
-                                            className="h-12"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="register-email" className="font-hindi">ईमेल</Label>
-                                        <Input
-                                            id="register-email"
-                                            type="email"
-                                            data-testid="register-email"
-                                            placeholder="your@email.com"
-                                            value={registerData.email}
-                                            onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                                            required
-                                            className="h-12"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="register-phone" className="font-hindi">फ़ोन नंबर</Label>
-                                        <Input
-                                            id="register-phone"
-                                            type="tel"
-                                            data-testid="register-phone"
-                                            placeholder="9876543210"
-                                            value={registerData.phone}
-                                            onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
-                                            required
-                                            className="h-12"
-                                        />
-                                    </div>
-                                    
-                                    <div className="space-y-2">
-                                        <Label htmlFor="register-password" className="font-hindi">पासवर्ड</Label>
-                                        <div className="relative">
-                                            <Input
-                                                id="register-password"
-                                                type={showPassword ? 'text' : 'password'}
-                                                data-testid="register-password"
-                                                placeholder="••••••••"
-                                                value={registerData.password}
-                                                onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                                                required
-                                                minLength={6}
-                                                className="h-12 pr-10"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
-                                            >
-                                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <Button 
-                                        type="submit" 
-                                        data-testid="register-submit"
-                                        className="w-full h-12 bg-emerald-700 hover:bg-emerald-800 font-hindi text-base"
-                                        disabled={loading}
-                                    >
-                                        {loading ? (
-                                            <Loader2 className="w-5 h-5 animate-spin" />
-                                        ) : (
-                                            'रजिस्टर करें'
-                                        )}
-                                    </Button>
-                                </form>
-                            </TabsContent>
-                        </Tabs>
+                            <Button 
+                                type="submit" 
+                                data-testid="login-submit"
+                                className="w-full h-12 bg-emerald-700 hover:bg-emerald-800 font-hindi text-base"
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                ) : (
+                                    'लॉगिन करें'
+                                )}
+                            </Button>
+                            
+                            <p className="text-xs text-center text-zinc-400 font-hindi mt-4">
+                                लॉगिन की जानकारी के लिए एडमिन से संपर्क करें
+                            </p>
+                        </form>
                     </CardContent>
                 </Card>
             </div>
