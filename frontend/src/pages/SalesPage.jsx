@@ -44,6 +44,10 @@ const SalesPage = () => {
     const [showUdharLedger, setShowUdharLedger] = useState(false);
     const [selectedWalkin, setSelectedWalkin] = useState(null);
     const [walkinDetail, setWalkinDetail] = useState(null);
+    const [custSaleSearch, setCustSaleSearch] = useState('');
+    const [showCustSaleDropdown, setShowCustSaleDropdown] = useState(false);
+    const [udharCustSearch, setUdharCustSearch] = useState('');
+    const [showUdharCustDropdown, setShowUdharCustDropdown] = useState(false);
 
     const [customerForm, setCustomerForm] = useState({ name: '', phone: '', address: '', customer_type: 'retail', gst_number: '' });
     const [saleForm, setSaleForm] = useState({ customer_id: '', product: 'milk', quantity: '', rate: '', direct_amount: '', mode: 'direct' });
