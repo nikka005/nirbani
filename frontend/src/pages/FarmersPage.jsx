@@ -31,7 +31,7 @@ import { cn } from '../lib/utils';
 const MILK_TYPES = [
     { value: 'cow', labelEn: 'Cow', labelHi: 'गाय' },
     { value: 'buffalo', labelEn: 'Buffalo', labelHi: 'भैंस' },
-    { value: 'mix', labelEn: 'Mix', labelHi: 'मिक्स' },
+    { value: 'both', labelEn: 'Both', labelHi: 'दोनों' },
 ];
 
 const FarmersPage = () => {
