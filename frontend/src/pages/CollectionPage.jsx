@@ -149,6 +149,35 @@ const CollectionPage = () => {
         } catch (error) { toast.error('Error deleting entry'); }
     };
 
+    const [showEditCollection, setShowEditCollection] = useState(false);
+    const [editCollData, setEditCollData] = useState(null);
+
+    const openEditCollection = (coll) => {
+        setEditCollData({ ...coll });
+        setShowEditCollection(true);
+    };
+
+    const handleUpdateCollection = async (e) => {
+        e.preventDefault();
+        if (!editCollData) return;
+        setSubmitting(true);
+        try {
+            await collectionAPI.update(editCollData.id, {
+                quantity: parseFloat(editCollData.quantity),
+                fat: parseFloat(editCollData.fat || 0),
+                snf: parseFloat(editCollData.snf || 0),
+                rate: parseFloat(editCollData.rate),
+                shift: editCollData.shift,
+                milk_type: editCollData.milk_type,
+            });
+            toast.success(t('Entry updated!', 'प्रविष्टि अपडेट!'));
+            setShowEditCollection(false);
+            setEditCollData(null);
+            fetchData();
+        } catch (error) { toast.error(error.response?.data?.detail || 'Error'); }
+        finally { setSubmitting(false); }
+    };
+
     const handleExport = async () => {
         const token = localStorage.getItem('auth_token');
         try {
