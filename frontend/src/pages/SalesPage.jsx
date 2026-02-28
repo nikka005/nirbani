@@ -16,7 +16,7 @@ import {
 import {
     ShoppingBag, Plus, Search, Users, Package, Loader2, Phone, Store, User,
     ChevronRight, Milk, CreditCard, Wallet, ArrowDownCircle, ArrowUpCircle,
-    IndianRupee, ChevronDown, ChevronUp
+    IndianRupee, ChevronDown, ChevronUp, Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
