@@ -133,6 +133,8 @@ class MilkCollectionCreate(BaseModel):
     fat: float  # fat percentage
     snf: Optional[float] = None  # SNF percentage
     milk_type: Optional[str] = None  # cow, buffalo, mix (auto from farmer if not set)
+    date: Optional[str] = None  # optional date override (YYYY-MM-DD) for historical entries
+    rate: Optional[float] = None  # optional rate override
 
 class MilkCollectionResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -227,6 +229,7 @@ class SaleCreate(BaseModel):
     rate: Optional[float] = 0
     direct_amount: Optional[float] = None
     notes: Optional[str] = ""
+    date: Optional[str] = None  # optional date override (YYYY-MM-DD) for historical entries
 
 class ShopSaleCreate(BaseModel):
     customer_name: Optional[str] = "Walk-in"
