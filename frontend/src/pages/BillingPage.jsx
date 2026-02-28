@@ -759,32 +759,32 @@ const FarmerBillTable = ({ data, t, onDelete, deleting }) => {
     if (!data.collections?.length) return null;
     return (
         <div className="overflow-x-auto">
-            <table className="w-full text-xs sm:text-sm">
+            <table className="w-full text-[10px] sm:text-xs">
                 <thead><tr className="bg-emerald-800 text-white">
-                    <th className="py-2 px-2 sm:px-3 text-left font-semibold">{t('Date', 'तारीख')}</th>
-                    <th className="py-2 px-2 sm:px-3 text-left font-semibold">{t('Shift', 'शिफ्ट')}</th>
-                    <th className="py-2 px-2 sm:px-3 text-left font-semibold">{t('Type', 'प्रकार')}</th>
-                    <th className="py-2 px-2 sm:px-3 text-right font-semibold">{t('Qty (L)', 'मात्रा')}</th>
-                    <th className="py-2 px-2 sm:px-3 text-right font-semibold">{t('Fat', 'फैट')}</th>
-                    <th className="py-2 px-2 sm:px-3 text-right font-semibold">{t('Rate', 'दर')}</th>
-                    <th className="py-2 px-2 sm:px-3 text-right font-semibold">{t('Amount', 'राशि')}</th>
-                    <th className="py-2 px-1 text-center font-semibold no-print" style={{width: '40px'}}></th>
+                    <th className="py-1.5 px-1.5 sm:px-2 text-left font-semibold">{t('Date', 'तारीख')}</th>
+                    <th className="py-1.5 px-1.5 sm:px-2 text-left font-semibold">{t('Shift', 'शिफ्ट')}</th>
+                    <th className="py-1.5 px-1.5 sm:px-2 text-left font-semibold">{t('Type', 'प्रकार')}</th>
+                    <th className="py-1.5 px-1.5 sm:px-2 text-right font-semibold">{t('Qty(L)', 'मात्रा')}</th>
+                    <th className="py-1.5 px-1.5 sm:px-2 text-right font-semibold">{t('Fat', 'फैट')}</th>
+                    <th className="py-1.5 px-1.5 sm:px-2 text-right font-semibold">{t('Rate', 'दर')}</th>
+                    <th className="py-1.5 px-1.5 sm:px-2 text-right font-semibold">{t('Amount', 'राशि')}</th>
+                    <th className="py-1 px-1 text-center font-semibold no-print" style={{width: '32px'}}></th>
                 </tr></thead>
                 <tbody>
                     {data.collections.map((c, idx) => (
-                        <tr key={c.id || idx} className={idx % 2 === 0 ? "bg-white" : "bg-zinc-50"}>
-                            <td className="py-1.5 px-2 sm:px-3">{c.date}</td>
-                            <td className="py-1.5 px-2 sm:px-3 capitalize">{c.shift === 'morning' ? t('Morning', 'सुबह') : t('Evening', 'शाम')}</td>
-                            <td className="py-1.5 px-2 sm:px-3 capitalize">{c.milk_type || 'cow'}</td>
-                            <td className="py-1.5 px-2 sm:px-3 text-right font-medium">{c.quantity}</td>
-                            <td className="py-1.5 px-2 sm:px-3 text-right">{c.fat}</td>
-                            <td className="py-1.5 px-2 sm:px-3 text-right">{formatCurrency(c.rate)}</td>
-                            <td className="py-1.5 px-2 sm:px-3 text-right font-semibold text-emerald-700">{formatCurrency(c.amount)}</td>
-                            <td className="py-1.5 px-1 text-center no-print">
+                        <tr key={c.id || idx} className={idx % 2 === 0 ? "bg-white" : "bg-zinc-50/60"}>
+                            <td className="py-1 px-1.5 sm:px-2">{c.date}</td>
+                            <td className="py-1 px-1.5 sm:px-2 capitalize">{c.shift === 'morning' ? t('AM', 'सुबह') : t('PM', 'शाम')}</td>
+                            <td className="py-1 px-1.5 sm:px-2 capitalize">{c.milk_type || 'cow'}</td>
+                            <td className="py-1 px-1.5 sm:px-2 text-right font-medium">{c.quantity}</td>
+                            <td className="py-1 px-1.5 sm:px-2 text-right">{c.fat}</td>
+                            <td className="py-1 px-1.5 sm:px-2 text-right">{formatCurrency(c.rate)}</td>
+                            <td className="py-1 px-1.5 sm:px-2 text-right font-semibold text-emerald-700">{formatCurrency(c.amount)}</td>
+                            <td className="py-1 px-1 text-center no-print">
                                 <button type="button" data-testid={`delete-collection-${c.id}`} onClick={() => onDelete(c.id)}
                                     disabled={deleting === c.id}
-                                    className="p-1 rounded hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors disabled:opacity-50">
-                                    {deleting === c.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                                    className="p-0.5 rounded hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors disabled:opacity-50">
+                                    {deleting === c.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
                                 </button>
                             </td>
                         </tr>
@@ -799,28 +799,28 @@ const CustomerBillTable = ({ data, t, onDelete, deleting }) => {
     if (!data.sales?.length) return null;
     return (
         <div className="overflow-x-auto">
-            <table className="w-full text-xs sm:text-sm">
+            <table className="w-full text-[10px] sm:text-xs">
                 <thead><tr className="bg-emerald-800 text-white">
-                    <th className="py-2 px-2 sm:px-3 text-left font-semibold">{t('Date', 'तारीख')}</th>
-                    <th className="py-2 px-2 sm:px-3 text-left font-semibold">{t('Product', 'उत्पाद')}</th>
-                    <th className="py-2 px-2 sm:px-3 text-right font-semibold">{t('Qty', 'मात्रा')}</th>
-                    <th className="py-2 px-2 sm:px-3 text-right font-semibold">{t('Rate', 'दर')}</th>
-                    <th className="py-2 px-2 sm:px-3 text-right font-semibold">{t('Amount', 'राशि')}</th>
-                    <th className="py-2 px-1 text-center font-semibold no-print" style={{width: '40px'}}></th>
+                    <th className="py-1.5 px-1.5 sm:px-2 text-left font-semibold">{t('Date', 'तारीख')}</th>
+                    <th className="py-1.5 px-1.5 sm:px-2 text-left font-semibold">{t('Product', 'उत्पाद')}</th>
+                    <th className="py-1.5 px-1.5 sm:px-2 text-right font-semibold">{t('Qty', 'मात्रा')}</th>
+                    <th className="py-1.5 px-1.5 sm:px-2 text-right font-semibold">{t('Rate', 'दर')}</th>
+                    <th className="py-1.5 px-1.5 sm:px-2 text-right font-semibold">{t('Amount', 'राशि')}</th>
+                    <th className="py-1 px-1 text-center font-semibold no-print" style={{width: '32px'}}></th>
                 </tr></thead>
                 <tbody>
                     {data.sales.map((s, idx) => (
-                        <tr key={s.id || idx} className={idx % 2 === 0 ? "bg-white" : "bg-zinc-50"}>
-                            <td className="py-1.5 px-2 sm:px-3">{s.date}</td>
-                            <td className="py-1.5 px-2 sm:px-3 capitalize">{s.product}</td>
-                            <td className="py-1.5 px-2 sm:px-3 text-right font-medium">{s.quantity > 0 ? s.quantity : '-'}</td>
-                            <td className="py-1.5 px-2 sm:px-3 text-right">{s.rate > 0 ? formatCurrency(s.rate) : '-'}</td>
-                            <td className="py-1.5 px-2 sm:px-3 text-right font-semibold text-emerald-700">{formatCurrency(s.amount)}</td>
-                            <td className="py-1.5 px-1 text-center no-print">
+                        <tr key={s.id || idx} className={idx % 2 === 0 ? "bg-white" : "bg-zinc-50/60"}>
+                            <td className="py-1 px-1.5 sm:px-2">{s.date}</td>
+                            <td className="py-1 px-1.5 sm:px-2 capitalize">{s.product}</td>
+                            <td className="py-1 px-1.5 sm:px-2 text-right font-medium">{s.quantity > 0 ? s.quantity : '-'}</td>
+                            <td className="py-1 px-1.5 sm:px-2 text-right">{s.rate > 0 ? formatCurrency(s.rate) : '-'}</td>
+                            <td className="py-1 px-1.5 sm:px-2 text-right font-semibold text-emerald-700">{formatCurrency(s.amount)}</td>
+                            <td className="py-1 px-1 text-center no-print">
                                 <button type="button" data-testid={`delete-sale-${s.id}`} onClick={() => onDelete(s.id)}
                                     disabled={deleting === s.id}
-                                    className="p-1 rounded hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors disabled:opacity-50">
-                                    {deleting === s.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                                    className="p-0.5 rounded hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors disabled:opacity-50">
+                                    {deleting === s.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
                                 </button>
                             </td>
                         </tr>
