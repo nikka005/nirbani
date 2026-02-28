@@ -411,10 +411,14 @@ const SalesPage = () => {
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-1.5">
                                             <span className={cn("text-sm sm:text-base font-bold", sale.is_udhar ? "text-red-600" : "text-emerald-700")}>
                                                 {formatCurrency(sale.amount)}
                                             </span>
+                                            <button type="button" data-testid={`edit-sale-${sale.id}`} onClick={() => openEditSale(sale)}
+                                                className="p-1 rounded hover:bg-blue-50 text-zinc-300 hover:text-blue-500 transition-colors">
+                                                <Pencil className="w-3.5 h-3.5" />
+                                            </button>
                                             <button type="button" data-testid={`delete-sale-${sale.id}`} onClick={() => handleDeleteSale(sale.id)}
                                                 className="p-1 rounded hover:bg-red-50 text-zinc-300 hover:text-red-500 transition-colors">
                                                 <Trash2 className="w-3.5 h-3.5" />
