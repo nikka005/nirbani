@@ -41,8 +41,9 @@ const toLocalDateStr = (d) => {
 };
 
 const BillingPage = () => {
-    const { language } = useAuth();
+    const { language, user } = useAuth();
     const t = (en, hi) => language === 'hi' ? hi : en;
+    const billedBy = user?.name || 'Staff';
     const billRef = useRef(null);
 
     const [activeTab, setActiveTab] = useState('farmer');
