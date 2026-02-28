@@ -1234,6 +1234,19 @@ async def delete_payment(payment_id: str, current_user: dict = Depends(get_curre
 
 @api_router.post("/customers", response_model=CustomerResponse)
 async def create_customer(customer: CustomerCreate, current_user: dict = Depends(get_current_user)):
+    # Check for duplicate name or phone
+    existing = await db.customers.find_one({
+        "$or": [
+            {"name": {"$regex": f"^{customer.name.strip()}$", "$options": "i"}},
+            {"phone": customer.phone.strip()} if customer.phone and customer.phone.strip() else {"_noop": True}
+        ]
+    }, {"_id": 0})
+    if existing:
+        if existing.get("name", "").lower() == customer.name.strip().lower():
+            raise HTTPException(status_code=400, detail=f"Customer with name '{customer.name}' already exists")
+        if customer.phone and existing.get("phone") == customer.phone.strip():
+            raise HTTPException(status_code=400, detail=f"Customer with phone '{customer.phone}' already exists")
+    
     customer_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
     
