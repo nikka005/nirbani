@@ -578,14 +578,18 @@ ${summaryHtml}
                                     </div>
                                 </div>
                                 <div className="flex justify-around">
-                                    {SIGNATORIES.map(name => (
-                                        <div key={name} className="text-center w-[28%]">
-                                            <p className="text-[10px] font-bold text-emerald-700 mb-3 italic">{name}</p>
-                                            <div className="border-t border-zinc-300 pt-1">
-                                                <p className="text-[8px] text-zinc-400">{t('Authorized Signatory', 'अधिकृत हस्ताक्षरकर्ता')}</p>
-                                            </div>
+                                    <div className="text-center w-[35%]">
+                                        <p className="text-[10px] font-bold text-emerald-700 mb-3 italic">{billedBy}</p>
+                                        <div className="border-t border-zinc-300 pt-1">
+                                            <p className="text-[8px] text-zinc-400">{t('Billed By', 'बिल बनाने वाला')}</p>
                                         </div>
-                                    ))}
+                                    </div>
+                                    <div className="text-center w-[35%]">
+                                        <p className="text-[10px] font-bold text-emerald-700 mb-3 italic">{dairyInfo.dairy_name || 'Nirbani Dairy'}</p>
+                                        <div className="border-t border-zinc-300 pt-1">
+                                            <p className="text-[8px] text-zinc-400">{t('Dairy', 'डेयरी')}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div className="text-center text-[7px] text-zinc-300 border-t border-zinc-100 py-1 bg-zinc-50">
