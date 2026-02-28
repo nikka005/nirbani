@@ -14,7 +14,7 @@ import {
 } from '../components/ui/select';
 import {
     FileText, Printer, Share2, Search, Loader2, Milk, Users,
-    ChevronRight, Plus, PlusCircle
+    ChevronRight, Plus, PlusCircle, Trash2, Copy
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -42,6 +42,7 @@ const BillingPage = () => {
     const [loading, setLoading] = useState(true);
     const [generating, setGenerating] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [deleting, setDeleting] = useState(null);
     const [billData, setBillData] = useState(null);
 
     const [selectedId, setSelectedId] = useState('');
@@ -56,7 +57,7 @@ const BillingPage = () => {
     const [showAddCollection, setShowAddCollection] = useState(false);
     const [showAddSale, setShowAddSale] = useState(false);
     const [collForm, setCollForm] = useState({ date: new Date().toISOString().split('T')[0], shift: new Date().getHours() < 12 ? 'morning' : 'evening', milk_type: 'cow', quantity: '', fat: '', snf: '', rate: '' });
-    const [saleForm, setSaleForm] = useState({ date: new Date().toISOString().split('T')[0], product: 'milk', quantity: '', rate: '', direct_amount: '', mode: 'direct' });
+    const [saleForm, setSaleForm] = useState({ date: new Date().toISOString().split('T')[0], product: 'milk', quantity: '', rate: '', direct_amount: '', mode: 'direct', repeatDays: '1' });
 
     const token = localStorage.getItem('auth_token');
     const headers = { Authorization: `Bearer ${token}` };
@@ -111,13 +112,38 @@ const BillingPage = () => {
         const { start, end } = getDateRange();
         setGenerating(true);
         try {
+            const ts = Date.now();
             const endpoint = activeTab === 'farmer'
-                ? `${BACKEND_URL}/api/billing/farmer/${selectedId}?start_date=${start}&end_date=${end}`
-                : `${BACKEND_URL}/api/billing/customer/${selectedId}?start_date=${start}&end_date=${end}`;
+                ? `${BACKEND_URL}/api/billing/farmer/${selectedId}?start_date=${start}&end_date=${end}&_t=${ts}`
+                : `${BACKEND_URL}/api/billing/customer/${selectedId}?start_date=${start}&end_date=${end}&_t=${ts}`;
             const res = await axios.get(endpoint, { headers });
             setBillData({ ...res.data, type: activeTab, period_label: getPeriodLabel(start, end) });
         } catch (e) { toast.error(t('Error generating bill', 'बिल बनाने में त्रुटि')); }
         finally { setGenerating(false); }
+    };
+
+    // Delete a collection entry
+    const handleDeleteCollection = async (collectionId) => {
+        if (!window.confirm(t('Delete this entry?', 'यह प्रविष्टि हटाएं?'))) return;
+        setDeleting(collectionId);
+        try {
+            await axios.delete(`${BACKEND_URL}/api/collections/${collectionId}`, { headers });
+            toast.success(t('Entry deleted', 'प्रविष्टि हटाई गई'));
+            await generateBill();
+        } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
+        finally { setDeleting(null); }
+    };
+
+    // Delete a sale entry
+    const handleDeleteSale = async (saleId) => {
+        if (!window.confirm(t('Delete this entry?', 'यह प्रविष्टि हटाएं?'))) return;
+        setDeleting(saleId);
+        try {
+            await axios.delete(`${BACKEND_URL}/api/sales/${saleId}`, { headers });
+            toast.success(t('Entry deleted', 'प्रविष्टि हटाई गई'));
+            await generateBill();
+        } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
+        finally { setDeleting(null); }
     };
 
     // Add Farmer Collection Entry
@@ -126,8 +152,6 @@ const BillingPage = () => {
         if (!collForm.quantity || !collForm.rate) { toast.error(t('Fill quantity and rate', 'मात्रा और दर भरें')); return; }
         setSubmitting(true);
         try {
-            // Get selected farmer data for the collection
-            const farmer = farmers.find(f => f.id === selectedId);
             await axios.post(`${BACKEND_URL}/api/collections`, {
                 farmer_id: selectedId,
                 date: collForm.date,
@@ -141,31 +165,47 @@ const BillingPage = () => {
             toast.success(t('Entry added!', 'प्रविष्टि जोड़ी गई!'));
             setShowAddCollection(false);
             setCollForm({ date: new Date().toISOString().split('T')[0], shift: new Date().getHours() < 12 ? 'morning' : 'evening', milk_type: 'cow', quantity: '', fat: '', snf: '', rate: '' });
-            // Regenerate bill to include new entry
-            generateBill();
+            await generateBill();
         } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
         finally { setSubmitting(false); }
     };
 
-    // Add Customer Sale Entry
+    // Add Customer Sale Entry (supports multi-day repeat)
     const handleAddSale = async (e) => {
         e.preventDefault();
         if (saleForm.mode === 'direct' && !saleForm.direct_amount) { toast.error(t('Enter amount', 'राशि दर्ज करें')); return; }
         if (saleForm.mode === 'qtyrate' && (!saleForm.quantity || !saleForm.rate)) { toast.error(t('Fill quantity and rate', 'मात्रा और दर भरें')); return; }
+
+        const repeatDays = Math.max(1, Math.min(31, parseInt(saleForm.repeatDays) || 1));
         setSubmitting(true);
         try {
-            await axios.post(`${BACKEND_URL}/api/sales`, {
-                customer_id: selectedId,
-                date: saleForm.date,
-                product: saleForm.product,
-                quantity: saleForm.quantity ? parseFloat(saleForm.quantity) : 0,
-                rate: saleForm.rate ? parseFloat(saleForm.rate) : 0,
-                direct_amount: saleForm.direct_amount ? parseFloat(saleForm.direct_amount) : null,
-            }, { headers });
-            toast.success(t('Sale added!', 'बिक्री जोड़ी गई!'));
+            const baseDate = new Date(saleForm.date);
+            let addedCount = 0;
+
+            for (let i = 0; i < repeatDays; i++) {
+                const d = new Date(baseDate);
+                d.setDate(d.getDate() + i);
+                const dateStr = d.toISOString().split('T')[0];
+
+                await axios.post(`${BACKEND_URL}/api/sales`, {
+                    customer_id: selectedId,
+                    date: dateStr,
+                    product: saleForm.product,
+                    quantity: saleForm.quantity ? parseFloat(saleForm.quantity) : 0,
+                    rate: saleForm.rate ? parseFloat(saleForm.rate) : 0,
+                    direct_amount: saleForm.direct_amount ? parseFloat(saleForm.direct_amount) : null,
+                }, { headers });
+                addedCount++;
+            }
+
+            if (addedCount > 1) {
+                toast.success(t(`${addedCount} entries added!`, `${addedCount} प्रविष्टि जोड़ी गई!`));
+            } else {
+                toast.success(t('Sale added!', 'बिक्री जोड़ी गई!'));
+            }
             setShowAddSale(false);
-            setSaleForm({ date: new Date().toISOString().split('T')[0], product: 'milk', quantity: '', rate: '', direct_amount: '', mode: 'direct' });
-            generateBill();
+            setSaleForm({ date: new Date().toISOString().split('T')[0], product: 'milk', quantity: '', rate: '', direct_amount: '', mode: 'direct', repeatDays: '1' });
+            await generateBill();
         } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
         finally { setSubmitting(false); }
     };
@@ -207,12 +247,12 @@ const BillingPage = () => {
         let text = `NIRBANI DAIRY - BILL\n${name}\nPeriod: ${d.period_label}\n\n`;
         if (d.type === 'farmer') {
             text += `Date | Shift | Qty(L) | Fat | Rate | Amount\n`;
-            d.collections?.forEach(c => { text += `${c.date} | ${c.shift} | ${c.quantity} | ${c.fat} | ₹${c.rate} | ₹${c.amount}\n`; });
-            text += `\nTotal: ${d.summary.total_quantity}L | ₹${d.summary.total_amount}\nPaid: ₹${d.summary.total_paid}\nBalance: ₹${d.summary.balance_due}`;
+            d.collections?.forEach(c => { text += `${c.date} | ${c.shift} | ${c.quantity} | ${c.fat} | ${c.rate} | ${c.amount}\n`; });
+            text += `\nTotal: ${d.summary.total_quantity}L | ${formatCurrency(d.summary.total_amount)}\nPaid: ${formatCurrency(d.summary.total_paid)}\nBalance: ${formatCurrency(d.summary.balance_due)}`;
         } else {
             text += `Date | Product | Qty | Rate | Amount\n`;
-            d.sales?.forEach(s => { text += `${s.date} | ${s.product} | ${s.quantity} | ₹${s.rate} | ₹${s.amount}\n`; });
-            text += `\nTotal: ₹${d.summary.total_amount}`;
+            d.sales?.forEach(s => { text += `${s.date} | ${s.product} | ${s.quantity} | ${s.rate} | ${s.amount}\n`; });
+            text += `\nTotal: ${formatCurrency(d.summary.total_amount)}`;
         }
         if (navigator.share) {
             try { await navigator.share({ title: 'Bill - Nirbani Dairy', text }); } catch (e) {}
@@ -266,7 +306,7 @@ const BillingPage = () => {
                                 placeholder={selectedName || t('Search by name or phone...', 'नाम या फ़ोन से खोजें...')}
                                 className={cn("h-12 pl-10", selectedId && "border-emerald-400 bg-emerald-50")}
                                 data-testid="billing-search" />
-                            {selectedId && <button type="button" onClick={() => { setSelectedId(''); setSelectedName(''); setSearchTerm(''); setBillData(null); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 text-sm">✕</button>}
+                            {selectedId && <button type="button" onClick={() => { setSelectedId(''); setSelectedName(''); setSearchTerm(''); setBillData(null); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 text-sm">&#x2715;</button>}
                         </div>
                         {showDropdown && !selectedId && (
                             <div className="absolute z-50 w-full bg-white border rounded-xl shadow-lg mt-1 max-h-52 overflow-y-auto">
@@ -353,7 +393,9 @@ const BillingPage = () => {
                                 </div>
                             </div>
                             <div className="p-4 sm:p-6">
-                                {billData.type === 'farmer' ? <FarmerBillTable data={billData} t={t} /> : <CustomerBillTable data={billData} t={t} />}
+                                {billData.type === 'farmer'
+                                    ? <FarmerBillTable data={billData} t={t} onDelete={handleDeleteCollection} deleting={deleting} />
+                                    : <CustomerBillTable data={billData} t={t} onDelete={handleDeleteSale} deleting={deleting} />}
                                 {/* Empty state with add prompt */}
                                 {((billData.type === 'farmer' && !billData.collections?.length) || (billData.type === 'customer' && !billData.sales?.length)) && (
                                     <div className="text-center py-6 no-print">
@@ -420,12 +462,9 @@ const BillingPage = () => {
                             <div className="flex gap-1">
                                 {['cow', 'buffalo'].map(mt => (
                                     <button key={mt} type="button" onClick={() => {
-                                        setCollForm(p => ({...p, milk_type: mt}));
                                         const farmer = farmers.find(f => f.id === selectedId);
-                                        if (farmer) {
-                                            const rate = mt === 'cow' ? (farmer.cow_rate || farmer.rate || '') : (farmer.buffalo_rate || farmer.rate || '');
-                                            setCollForm(p => ({...p, milk_type: mt, rate: rate ? String(rate) : ''}));
-                                        }
+                                        const rate = mt === 'cow' ? (farmer?.cow_rate || farmer?.rate || '') : (farmer?.buffalo_rate || farmer?.rate || '');
+                                        setCollForm(p => ({...p, milk_type: mt, rate: rate ? String(rate) : ''}));
                                     }}
                                         className={cn("flex-1 py-2 rounded-lg border text-xs font-semibold",
                                             collForm.milk_type === mt ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-zinc-200 text-zinc-500")}>
@@ -441,7 +480,7 @@ const BillingPage = () => {
                                     className="h-12 text-lg" data-testid="coll-quantity" placeholder="0" required />
                             </div>
                             <div className="space-y-1.5">
-                                <Label className="text-xs">{t('Rate (₹/L)', 'दर (₹/L)')} *</Label>
+                                <Label className="text-xs">{t('Rate (/L)', 'दर (/L)')} *</Label>
                                 <Input type="number" step="0.5" value={collForm.rate} onChange={(e) => setCollForm(p => ({...p, rate: e.target.value}))}
                                     className="h-12 text-lg" data-testid="coll-rate" placeholder="0" required />
                             </div>
@@ -461,7 +500,7 @@ const BillingPage = () => {
                         {collForm.quantity && collForm.rate && (
                             <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
                                 <span className="text-sm text-emerald-600">{t('Total', 'कुल')}:</span>
-                                <span className="text-xl font-bold text-emerald-700 ml-2">₹{(parseFloat(collForm.quantity || 0) * parseFloat(collForm.rate || 0)).toFixed(2)}</span>
+                                <span className="text-xl font-bold text-emerald-700 ml-2">{formatCurrency(parseFloat(collForm.quantity || 0) * parseFloat(collForm.rate || 0))}</span>
                             </div>
                         )}
                         <Button type="submit" data-testid="submit-collection" className="w-full h-12 bg-emerald-700 hover:bg-emerald-800 text-base" disabled={submitting}>
@@ -499,14 +538,14 @@ const BillingPage = () => {
                             </button>
                             <button type="button" onClick={() => setSaleForm(p => ({...p, mode: 'qtyrate', direct_amount: ''}))} data-testid="sale-entry-mode-qtyrate"
                                 className={cn("flex-1 py-2 rounded-lg border text-xs font-semibold", saleForm.mode === 'qtyrate' ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-zinc-200 text-zinc-500")}>
-                                {t('Qty × Rate', 'मात्रा × दर')}
+                                {t('Qty x Rate', 'मात्रा x दर')}
                             </button>
                         </div>
                         {saleForm.mode === 'direct' ? (
                             <div className="space-y-1.5">
-                                <Label className="text-xs">{t('Amount (₹)', 'राशि (₹)')} *</Label>
+                                <Label className="text-xs">{t('Amount', 'राशि')} *</Label>
                                 <Input type="number" step="0.5" value={saleForm.direct_amount} onChange={(e) => setSaleForm(p => ({...p, direct_amount: e.target.value}))}
-                                    className="h-14 text-2xl text-center font-bold" data-testid="sale-entry-amount" placeholder="₹ 0" />
+                                    className="h-14 text-2xl text-center font-bold" data-testid="sale-entry-amount" placeholder="0" />
                             </div>
                         ) : (
                             <div className="grid grid-cols-2 gap-3">
@@ -516,22 +555,52 @@ const BillingPage = () => {
                                         className="h-12 text-lg" data-testid="sale-entry-quantity" />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs">{t('Rate (₹)', 'दर (₹)')} *</Label>
+                                    <Label className="text-xs">{t('Rate', 'दर')} *</Label>
                                     <Input type="number" step="0.5" value={saleForm.rate} onChange={(e) => setSaleForm(p => ({...p, rate: e.target.value}))}
                                         className="h-12 text-lg" data-testid="sale-entry-rate" />
                                 </div>
                             </div>
                         )}
+
+                        {/* Repeat for multiple days */}
+                        <div className="space-y-1.5">
+                            <Label className="text-xs flex items-center gap-1">
+                                <Copy className="w-3 h-3" />
+                                {t('Repeat for how many days?', 'कितने दिन के लिए दोहराएं?')}
+                            </Label>
+                            <div className="flex items-center gap-2">
+                                <Input type="number" min="1" max="31" value={saleForm.repeatDays}
+                                    onChange={(e) => setSaleForm(p => ({...p, repeatDays: e.target.value}))}
+                                    className="h-10 w-20 text-center" data-testid="sale-entry-repeat-days" />
+                                <span className="text-xs text-zinc-500">
+                                    {parseInt(saleForm.repeatDays) > 1
+                                        ? t(`Will add ${saleForm.repeatDays} entries from ${saleForm.date}`, `${saleForm.date} से ${saleForm.repeatDays} प्रविष्टि जोड़ेगा`)
+                                        : t('Single day entry', 'एक दिन की प्रविष्टि')}
+                                </span>
+                            </div>
+                        </div>
+
                         {((saleForm.mode === 'direct' && saleForm.direct_amount) || (saleForm.mode === 'qtyrate' && saleForm.quantity && saleForm.rate)) && (
                             <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
                                 <span className="text-sm text-emerald-600">{t('Total', 'कुल')}:</span>
                                 <span className="text-xl font-bold text-emerald-700 ml-2">
-                                    ₹{saleForm.mode === 'direct' ? parseFloat(saleForm.direct_amount || 0).toFixed(2) : (parseFloat(saleForm.quantity || 0) * parseFloat(saleForm.rate || 0)).toFixed(2)}
+                                    {formatCurrency(
+                                        (saleForm.mode === 'direct' ? parseFloat(saleForm.direct_amount || 0) : (parseFloat(saleForm.quantity || 0) * parseFloat(saleForm.rate || 0)))
+                                        * Math.max(1, parseInt(saleForm.repeatDays) || 1)
+                                    )}
+                                    {parseInt(saleForm.repeatDays) > 1 && (
+                                        <span className="text-xs font-normal text-emerald-500 ml-1">
+                                            ({saleForm.repeatDays} {t('days', 'दिन')})
+                                        </span>
+                                    )}
                                 </span>
                             </div>
                         )}
                         <Button type="submit" data-testid="submit-sale-entry" className="w-full h-12 bg-emerald-700 hover:bg-emerald-800 text-base" disabled={submitting}>
-                            {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : t('Add Entry', 'प्रविष्टि जोड़ें')}
+                            {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> :
+                                parseInt(saleForm.repeatDays) > 1
+                                    ? t(`Add ${saleForm.repeatDays} Entries`, `${saleForm.repeatDays} प्रविष्टि जोड़ें`)
+                                    : t('Add Entry', 'प्रविष्टि जोड़ें')}
                         </Button>
                     </form>
                 </DialogContent>
@@ -547,10 +616,8 @@ const SummaryRow = ({ label, value, bold }) => (
     </div>
 );
 
-const FarmerBillTable = ({ data, t }) => {
+const FarmerBillTable = ({ data, t, onDelete, deleting }) => {
     if (!data.collections?.length) return null;
-    const dateMap = {};
-    data.collections.forEach(c => { if (!dateMap[c.date]) dateMap[c.date] = []; dateMap[c.date].push(c); });
     return (
         <div className="overflow-x-auto">
             <table className="w-full text-xs sm:text-sm">
@@ -562,29 +629,35 @@ const FarmerBillTable = ({ data, t }) => {
                     <th className="py-2 px-2 sm:px-3 text-right font-semibold">{t('Fat', 'फैट')}</th>
                     <th className="py-2 px-2 sm:px-3 text-right font-semibold">{t('Rate', 'दर')}</th>
                     <th className="py-2 px-2 sm:px-3 text-right font-semibold">{t('Amount', 'राशि')}</th>
+                    <th className="py-2 px-1 text-center font-semibold no-print" style={{width: '40px'}}></th>
                 </tr></thead>
                 <tbody>
-                    {Object.entries(dateMap).map(([date, items]) => items.map((c, idx) => (
+                    {data.collections.map((c, idx) => (
                         <tr key={c.id || idx} className={idx % 2 === 0 ? "bg-white" : "bg-zinc-50"}>
-                            <td className="py-1.5 px-2 sm:px-3">{idx === 0 ? date : ''}</td>
+                            <td className="py-1.5 px-2 sm:px-3">{c.date}</td>
                             <td className="py-1.5 px-2 sm:px-3 capitalize">{c.shift === 'morning' ? t('Morning', 'सुबह') : t('Evening', 'शाम')}</td>
                             <td className="py-1.5 px-2 sm:px-3 capitalize">{c.milk_type || 'cow'}</td>
                             <td className="py-1.5 px-2 sm:px-3 text-right font-medium">{c.quantity}</td>
                             <td className="py-1.5 px-2 sm:px-3 text-right">{c.fat}</td>
-                            <td className="py-1.5 px-2 sm:px-3 text-right">₹{c.rate}</td>
-                            <td className="py-1.5 px-2 sm:px-3 text-right font-semibold text-emerald-700">₹{c.amount?.toFixed(2)}</td>
+                            <td className="py-1.5 px-2 sm:px-3 text-right">{formatCurrency(c.rate)}</td>
+                            <td className="py-1.5 px-2 sm:px-3 text-right font-semibold text-emerald-700">{formatCurrency(c.amount)}</td>
+                            <td className="py-1.5 px-1 text-center no-print">
+                                <button type="button" data-testid={`delete-collection-${c.id}`} onClick={() => onDelete(c.id)}
+                                    disabled={deleting === c.id}
+                                    className="p-1 rounded hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors disabled:opacity-50">
+                                    {deleting === c.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                                </button>
+                            </td>
                         </tr>
-                    )))}
+                    ))}
                 </tbody>
             </table>
         </div>
     );
 };
 
-const CustomerBillTable = ({ data, t }) => {
+const CustomerBillTable = ({ data, t, onDelete, deleting }) => {
     if (!data.sales?.length) return null;
-    const dateMap = {};
-    data.sales.forEach(s => { if (!dateMap[s.date]) dateMap[s.date] = []; dateMap[s.date].push(s); });
     return (
         <div className="overflow-x-auto">
             <table className="w-full text-xs sm:text-sm">
@@ -594,17 +667,25 @@ const CustomerBillTable = ({ data, t }) => {
                     <th className="py-2 px-2 sm:px-3 text-right font-semibold">{t('Qty', 'मात्रा')}</th>
                     <th className="py-2 px-2 sm:px-3 text-right font-semibold">{t('Rate', 'दर')}</th>
                     <th className="py-2 px-2 sm:px-3 text-right font-semibold">{t('Amount', 'राशि')}</th>
+                    <th className="py-2 px-1 text-center font-semibold no-print" style={{width: '40px'}}></th>
                 </tr></thead>
                 <tbody>
-                    {Object.entries(dateMap).map(([date, items]) => items.map((s, idx) => (
+                    {data.sales.map((s, idx) => (
                         <tr key={s.id || idx} className={idx % 2 === 0 ? "bg-white" : "bg-zinc-50"}>
-                            <td className="py-1.5 px-2 sm:px-3">{idx === 0 ? date : ''}</td>
+                            <td className="py-1.5 px-2 sm:px-3">{s.date}</td>
                             <td className="py-1.5 px-2 sm:px-3 capitalize">{s.product}</td>
                             <td className="py-1.5 px-2 sm:px-3 text-right font-medium">{s.quantity > 0 ? s.quantity : '-'}</td>
-                            <td className="py-1.5 px-2 sm:px-3 text-right">{s.rate > 0 ? `₹${s.rate}` : '-'}</td>
-                            <td className="py-1.5 px-2 sm:px-3 text-right font-semibold text-emerald-700">₹{s.amount?.toFixed(2)}</td>
+                            <td className="py-1.5 px-2 sm:px-3 text-right">{s.rate > 0 ? formatCurrency(s.rate) : '-'}</td>
+                            <td className="py-1.5 px-2 sm:px-3 text-right font-semibold text-emerald-700">{formatCurrency(s.amount)}</td>
+                            <td className="py-1.5 px-1 text-center no-print">
+                                <button type="button" data-testid={`delete-sale-${s.id}`} onClick={() => onDelete(s.id)}
+                                    disabled={deleting === s.id}
+                                    className="p-1 rounded hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors disabled:opacity-50">
+                                    {deleting === s.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                                </button>
+                            </td>
                         </tr>
-                    )))}
+                    ))}
                 </tbody>
             </table>
         </div>
