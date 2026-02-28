@@ -748,13 +748,6 @@ ${summaryHtml}
     );
 };
 
-const SummaryRow = ({ label, value, bold }) => (
-    <div className={cn("flex justify-between items-center", bold && "font-bold text-emerald-800")}>
-        <span className={cn("text-sm", !bold && "text-zinc-600")}>{label}</span>
-        <span className={cn("text-sm", bold ? "text-lg" : "")}>{value}</span>
-    </div>
-);
-
 const FarmerBillTable = ({ data, t, onDelete, deleting }) => {
     if (!data.collections?.length) return null;
     return (
