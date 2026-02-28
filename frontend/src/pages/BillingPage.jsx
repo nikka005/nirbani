@@ -220,31 +220,102 @@ const BillingPage = () => {
     };
 
     const handlePrint = () => {
-        const content = billRef.current;
-        if (!content) return;
+        if (!billData) return;
+        const d = billData;
+        const name = d.type === 'farmer' ? d.farmer?.name : d.customer?.name;
+        const phone = d.type === 'farmer' ? d.farmer?.phone : d.customer?.phone;
+        const village = d.farmer?.village || '';
+        const billType = d.type === 'farmer' ? 'FARMER BILL / किसान बिल' : 'CUSTOMER BILL / ग्राहक बिल';
+
+        let tableRows = '';
+        if (d.type === 'farmer') {
+            const headers = '<tr><th>Date</th><th>Shift</th><th>Type</th><th class="r">Qty(L)</th><th class="r">Fat</th><th class="r">Rate</th><th class="r">Amount</th></tr>';
+            const rows = (d.collections || []).map((c, i) =>
+                `<tr class="${i % 2 ? 'alt' : ''}"><td>${c.date}</td><td>${c.shift}</td><td>${c.milk_type || 'cow'}</td><td class="r">${c.quantity}</td><td class="r">${c.fat}</td><td class="r">${c.rate}</td><td class="r b">${c.amount?.toFixed(2)}</td></tr>`
+            ).join('');
+            tableRows = headers + rows;
+        } else {
+            const headers = '<tr><th>Date</th><th>Product</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Amount</th></tr>';
+            const rows = (d.sales || []).map((s, i) =>
+                `<tr class="${i % 2 ? 'alt' : ''}"><td>${s.date}</td><td>${s.product}</td><td class="r">${s.quantity > 0 ? s.quantity : '-'}</td><td class="r">${s.rate > 0 ? s.rate : '-'}</td><td class="r b">${s.amount?.toFixed(2)}</td></tr>`
+            ).join('');
+            tableRows = headers + rows;
+        }
+
+        let summaryHtml = '';
+        if (d.type === 'farmer') {
+            summaryHtml = `
+                <div class="sum-grid">
+                    <div class="sum-item"><span>Total Quantity / कुल मात्रा</span><span>${d.summary.total_quantity} L</span></div>
+                    <div class="sum-item"><span>Total Amount / कुल राशि</span><span>${d.summary.total_amount?.toFixed(2)}</span></div>
+                    <div class="sum-item"><span>Paid / भुगतान</span><span>${d.summary.total_paid?.toFixed(2)}</span></div>
+                    <div class="sum-item total"><span>Balance Due / बकाया</span><span>${d.summary.balance_due?.toFixed(2)}</span></div>
+                </div>`;
+        } else {
+            summaryHtml = `
+                <div class="sum-grid">
+                    <div class="sum-item"><span>Total Entries / कुल प्रविष्टि</span><span>${d.summary.total_entries}</span></div>
+                    <div class="sum-item total"><span>Total Amount / कुल राशि</span><span>${d.summary.total_amount?.toFixed(2)}</span></div>
+                </div>`;
+        }
+
         const win = window.open('', '_blank');
-        win.document.write(`
-            <html><head><title>Bill - Nirbani Dairy</title>
-            <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { font-family: 'Segoe UI', sans-serif; padding: 20px; color: #1a1a1a; }
-                .bill-header { text-align: center; border-bottom: 3px solid #166534; padding-bottom: 16px; margin-bottom: 16px; }
-                .bill-header h1 { font-size: 24px; color: #166534; font-weight: 800; }
-                .bill-header p { font-size: 12px; color: #666; }
-                .bill-info { display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 13px; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 12px; }
-                th { background: #166534; color: white; padding: 8px 6px; text-align: left; font-weight: 600; }
-                td { padding: 6px; border-bottom: 1px solid #e5e5e5; }
-                tr:nth-child(even) { background: #f9fafb; }
-                .summary-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
-                .summary-row.total { font-size: 16px; font-weight: 800; border-top: 2px solid #166534; padding-top: 8px; margin-top: 8px; color: #166534; }
-                .footer { text-align: center; margin-top: 24px; font-size: 10px; color: #999; border-top: 1px solid #e5e5e5; padding-top: 12px; }
-                .no-print { display: none !important; }
-                @media print { body { padding: 10px; } .no-print { display: none !important; } }
-            </style></head><body>${content.innerHTML}
-            <div class="footer">Nirbani Dairy Management Software | Computer Generated Bill</div>
-            </body></html>
-        `);
+        win.document.write(`<!DOCTYPE html><html><head><title>Bill - Nirbani Dairy</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,sans-serif;color:#1a1a1a;padding:8mm;font-size:10px;max-width:210mm}
+.header{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #166534;padding-bottom:6px;margin-bottom:6px}
+.header-left{display:flex;align-items:center;gap:10px}
+.logo{width:44px;height:44px;background:#166534;border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:18px;font-family:serif}
+.dairy-name{font-size:18px;font-weight:800;color:#166534;font-family:Georgia,serif;letter-spacing:1px}
+.dairy-sub{font-size:8px;color:#555;margin-top:1px}
+.header-right{text-align:right;font-size:8px;color:#555;line-height:1.5}
+.bill-type{text-align:center;background:#166534;color:white;padding:4px 0;font-size:10px;font-weight:700;letter-spacing:2px;margin-bottom:6px}
+.info-row{display:flex;justify-content:space-between;margin-bottom:6px;font-size:9px;padding:4px 6px;background:#f8faf8;border:1px solid #e0e8e0;border-radius:4px}
+.info-row .label{color:#666;font-size:8px}
+.info-row .val{font-weight:700;font-size:10px;color:#1a1a1a}
+table{width:100%;border-collapse:collapse;margin-bottom:6px;font-size:9px}
+th{background:#166534;color:white;padding:4px 5px;text-align:left;font-weight:600;font-size:8px;text-transform:uppercase}
+td{padding:3px 5px;border-bottom:1px solid #e5e5e5}
+tr.alt{background:#f5f8f5}
+.r{text-align:right}
+.b{font-weight:700;color:#166534}
+.sum-grid{border:2px solid #166534;border-radius:4px;overflow:hidden;margin-bottom:6px}
+.sum-item{display:flex;justify-content:space-between;padding:3px 8px;font-size:9px;border-bottom:1px solid #e0e8e0}
+.sum-item:last-child{border-bottom:none}
+.sum-item.total{background:#166534;color:white;font-weight:800;font-size:11px;padding:5px 8px}
+.footer{text-align:center;font-size:7px;color:#999;border-top:1px solid #ddd;padding-top:4px;margin-top:6px}
+.sig-row{display:flex;justify-content:space-between;margin-top:16px;font-size:8px;color:#666}
+.sig-row div{text-align:center;border-top:1px solid #999;padding-top:3px;width:35%}
+@media print{body{padding:5mm}@page{size:A4;margin:5mm}}
+</style></head><body>
+<div class="header">
+    <div class="header-left">
+        <div class="logo">N</div>
+        <div>
+            <div class="dairy-name">NIRBANI DAIRY</div>
+            <div class="dairy-sub">Dairy Management Software / डेयरी प्रबंधन सॉफ्टवेयर</div>
+        </div>
+    </div>
+    <div class="header-right">
+        Ph: _______________<br>
+        Address: _______________<br>
+        GST: _______________
+    </div>
+</div>
+<div class="bill-type">${billType}</div>
+<div class="info-row">
+    <div><div class="label">${d.type === 'farmer' ? 'Farmer / किसान' : 'Customer / ग्राहक'}</div><div class="val">${name}</div></div>
+    <div><div class="label">Phone / फ़ोन</div><div class="val">${phone || '-'}</div></div>
+    ${village ? `<div><div class="label">Village / गांव</div><div class="val">${village}</div></div>` : ''}
+    <div><div class="label">Period / अवधि</div><div class="val">${d.period_label}</div></div>
+    <div><div class="label">Entries / प्रविष्टि</div><div class="val">${d.summary.total_entries}</div></div>
+</div>
+<table>${tableRows}</table>
+${summaryHtml}
+<div class="sig-row"><div>Dairy Signature / डेयरी हस्ताक्षर</div><div>${d.type === 'farmer' ? 'Farmer Signature / किसान हस्ताक्षर' : 'Customer Signature / ग्राहक हस्ताक्षर'}</div></div>
+<div class="footer">Nirbani Dairy Management Software | Computer Generated Bill | This is not a tax invoice</div>
+</body></html>`);
         win.document.close();
         win.print();
     };
