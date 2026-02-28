@@ -693,10 +693,13 @@ async def get_me(current_user: dict = Depends(get_current_user)):
 
 @api_router.post("/farmers", response_model=FarmerResponse)
 async def create_farmer(farmer: FarmerCreate, current_user: dict = Depends(get_current_user)):
-    # Check for duplicate name or phone
+    # Auto-capitalize name
+    farmer.name = farmer.name.strip().title()
+    
+    # Check for duplicate name or phone (case-insensitive)
     existing = await db.farmers.find_one({
         "$or": [
-            {"name": {"$regex": f"^{farmer.name.strip()}$", "$options": "i"}},
+            {"name": {"$regex": f"^{farmer.name}$", "$options": "i"}},
             {"phone": farmer.phone.strip()} if farmer.phone and farmer.phone.strip() else {"_noop": True}
         ]
     }, {"_id": 0})
