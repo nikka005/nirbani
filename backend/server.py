@@ -750,7 +750,7 @@ async def get_farmers(
     if is_active is not None:
         query["is_active"] = is_active
     
-    farmers = await db.farmers.find(query, {"_id": 0}).sort("name", 1).to_list(1000)
+    farmers = await db.farmers.find(query, {"_id": 0}).sort("name", 1).collation({"locale": "en", "strength": 2}).to_list(1000)
     return [FarmerResponse(**f) for f in farmers]
 
 @api_router.get("/farmers/{farmer_id}", response_model=FarmerResponse)
@@ -1282,7 +1282,7 @@ async def get_customers(
     if customer_type:
         query["customer_type"] = customer_type
     
-    customers = await db.customers.find(query, {"_id": 0}).sort("name", 1).to_list(1000)
+    customers = await db.customers.find(query, {"_id": 0}).sort("name", 1).collation({"locale": "en", "strength": 2}).to_list(1000)
     return [CustomerResponse(**c) for c in customers]
 
 @api_router.get("/customers/{customer_id}", response_model=CustomerResponse)
