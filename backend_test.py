@@ -5,7 +5,7 @@ import json
 import uuid
 
 class NirbaniDairyTester:
-    def __init__(self, base_url="https://farmer-hub-14.preview.emergentagent.com"):
+    def __init__(self, base_url="https://farm-billing-hub.preview.emergentagent.com"):
         self.base_url = base_url.rstrip('/')
         self.token = None
         self.user_data = None
