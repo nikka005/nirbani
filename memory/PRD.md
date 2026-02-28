@@ -11,15 +11,17 @@ Complete Dairy Management Software (Web PWA) for Indian dairy businesses with bi
 5. Fat & SNF Rate Management
 6. Billing — Farmer & Customer bills (Monthly/15 Days/Custom), Print/Share, Nirbani branding
 7. **Live Data Entry on Billing Page** — Add missing milk/sale entries directly while generating bills (historical dates supported)
-8. SMS Automation (MSG91 - INACTIVE, requires API key)
-9. Daily Sales & Expense Tracking
-10. Multi-Branch Management
-11. Reports & Analytics
-12. Bulk Milk Sale to Dairy Plant
-13. Shop Sales with Udhar (Credit) System
-14. Separate Admin Panel (`/backman/*`)
-15. Direct Amount entry for all sales
-16. Bulk Orders for Hotels, Caterers, Halwai
+8. **Delete entries from bill** — Trash icon on each entry row with confirmation and auto-refresh
+9. **Multi-day repeat for customer sales** — Add same sale entry for multiple consecutive days at once
+10. SMS Automation (MSG91 - INACTIVE, requires API key)
+11. Daily Sales & Expense Tracking
+12. Multi-Branch Management
+13. Reports & Analytics
+14. Bulk Milk Sale to Dairy Plant
+15. Shop Sales with Udhar (Credit) System
+16. Separate Admin Panel (`/backman/*`)
+17. Direct Amount entry for all sales
+18. Bulk Orders for Hotels, Caterers, Halwai
 
 ## Billing System
 - `/billing` page with Farmer Bill / Customer Bill tabs
@@ -28,7 +30,10 @@ Complete Dairy Management Software (Web PWA) for Indian dairy businesses with bi
 - Summary: totals, payments, balance due
 - Print / Share buttons
 - NIRBANI DAIRY branding header
-- **Live Entry**: Add Collection (farmer) or Sale (customer) entries directly from billing page with historical date support
+- **Live Entry**: Add Collection (farmer) or Sale (customer) entries with historical date support
+- **Delete Entry**: Trash icon on each row, confirms before deleting, auto-refreshes bill
+- **Repeat Days**: Customer sale dialog has "Repeat for how many days?" field (1-31 days)
+- **Cache-busting**: Bill always fetches fresh data from server
 
 ## Credentials
 - Admin: nirbanidairy@gmal.com / Nirbani0056!
