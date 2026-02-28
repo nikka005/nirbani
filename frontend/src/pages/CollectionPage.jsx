@@ -401,6 +401,10 @@ const CollectionPage = () => {
                                     <div className="text-right">
                                         <p className="font-bold text-emerald-700 text-base">{formatCurrency(c.amount)}</p>
                                     </div>
+                                    <Button variant="ghost" size="icon" onClick={() => openEditCollection(c)}
+                                        data-testid={`edit-collection-${c.id}`} className="text-zinc-300 hover:text-blue-500 shrink-0">
+                                        <Pencil className="w-4 h-4" />
+                                    </Button>
                                     <Button variant="ghost" size="icon" onClick={() => handleDelete(c.id)}
                                         data-testid={`delete-collection-${c.id}`} className="text-zinc-300 hover:text-red-500 shrink-0">
                                         <Trash2 className="w-4 h-4" />
