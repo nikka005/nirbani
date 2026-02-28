@@ -693,6 +693,19 @@ async def get_me(current_user: dict = Depends(get_current_user)):
 
 @api_router.post("/farmers", response_model=FarmerResponse)
 async def create_farmer(farmer: FarmerCreate, current_user: dict = Depends(get_current_user)):
+    # Check for duplicate name or phone
+    existing = await db.farmers.find_one({
+        "$or": [
+            {"name": {"$regex": f"^{farmer.name.strip()}$", "$options": "i"}},
+            {"phone": farmer.phone.strip()} if farmer.phone and farmer.phone.strip() else {"_noop": True}
+        ]
+    }, {"_id": 0})
+    if existing:
+        if existing.get("name", "").lower() == farmer.name.strip().lower():
+            raise HTTPException(status_code=400, detail=f"Farmer with name '{farmer.name}' already exists")
+        if farmer.phone and existing.get("phone") == farmer.phone.strip():
+            raise HTTPException(status_code=400, detail=f"Farmer with phone '{farmer.phone}' already exists")
+    
     farmer_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
     
