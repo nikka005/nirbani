@@ -64,8 +64,9 @@ const BillingPage = () => {
     // Add Entry dialogs
     const [showAddCollection, setShowAddCollection] = useState(false);
     const [showAddSale, setShowAddSale] = useState(false);
-    const [collForm, setCollForm] = useState({ date: new Date().toISOString().split('T')[0], shift: new Date().getHours() < 12 ? 'morning' : 'evening', milk_type: 'cow', quantity: '', fat: '', snf: '', rate: '' });
-    const [saleForm, setSaleForm] = useState({ date: new Date().toISOString().split('T')[0], product: 'milk', quantity: '', rate: '', direct_amount: '', mode: 'direct', repeatDays: '1' });
+    const today = toLocalDateStr(new Date());
+    const [collForm, setCollForm] = useState({ date: today, shift: new Date().getHours() < 12 ? 'morning' : 'evening', milk_type: 'cow', quantity: '', fat: '', snf: '', rate: '' });
+    const [saleForm, setSaleForm] = useState({ date: today, product: 'milk', quantity: '', rate: '', direct_amount: '', mode: 'direct', repeatDays: '1' });
 
     const token = localStorage.getItem('auth_token');
     const headers = { Authorization: `Bearer ${token}` };
