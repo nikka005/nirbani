@@ -103,7 +103,7 @@ const BillingPage = () => {
             start = new Date(customStart);
             end = new Date(customEnd);
         }
-        return { start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0] };
+        return { start: toLocalDateStr(start), end: toLocalDateStr(end) };
     };
 
     const getPeriodLabel = (start, end) => {
@@ -193,7 +193,7 @@ const BillingPage = () => {
             for (let i = 0; i < repeatDays; i++) {
                 const d = new Date(baseDate);
                 d.setDate(d.getDate() + i);
-                const dateStr = d.toISOString().split('T')[0];
+                const dateStr = toLocalDateStr(d);
 
                 await axios.post(`${BACKEND_URL}/api/sales`, {
                     customer_id: selectedId,
