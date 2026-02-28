@@ -557,7 +557,16 @@ const SalesPage = () => {
                                             <span className="px-1.5 py-0.5 rounded bg-zinc-100 text-[10px] capitalize">{c.customer_type}</span>
                                         </div>
                                     </div>
-                                    <ChevronRight className="w-4 h-4 text-zinc-400 shrink-0" />
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        <button type="button" data-testid={`edit-customer-${c.id}`} onClick={(e) => openEditCustomer(e, c)}
+                                            className="p-1.5 rounded-lg hover:bg-blue-50 text-zinc-400 hover:text-blue-500 transition-colors">
+                                            <Pencil className="w-4 h-4" />
+                                        </button>
+                                        <button type="button" data-testid={`delete-customer-${c.id}`} onClick={(e) => handleDeleteCustomer(e, c.id)}
+                                            className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
