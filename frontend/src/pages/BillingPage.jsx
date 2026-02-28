@@ -328,7 +328,8 @@ const BillingPage = () => {
             </div>`;
         }
 
-        const sigHtml = SIGNATORIES.map(n => `<div class="sig"><div class="sig-name">${n}</div><div class="sig-line">Authorized Signatory</div></div>`).join('');
+        const sigHtml = `<div class="sig"><div class="sig-name">${billedBy}</div><div class="sig-line">Billed By / बिल बनाने वाला</div></div>
+<div class="sig"><div class="sig-name">${dName}</div><div class="sig-line">Dairy / डेयरी</div></div>`;
 
         const win = window.open('', '_blank');
         win.document.write(`<!DOCTYPE html><html><head><title>Bill - ${dName}</title>
