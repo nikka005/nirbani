@@ -292,7 +292,17 @@ const FarmersPage = () => {
                                     </div>
                                     <p className="text-xs text-zinc-500">{texts.balance}</p>
                                 </div>
-                                <ChevronRight className="w-5 h-5 text-zinc-400" />
+                                <div className="flex items-center gap-1 shrink-0">
+                                    <button type="button" data-testid={`edit-farmer-${farmer.id}`} onClick={(e) => openEditFarmer(e, farmer)}
+                                        className="p-1.5 rounded-lg hover:bg-blue-50 text-zinc-400 hover:text-blue-500 transition-colors">
+                                        <Pencil className="w-4 h-4" />
+                                    </button>
+                                    <button type="button" data-testid={`delete-farmer-${farmer.id}`} onClick={(e) => handleDeleteFarmer(e, farmer.id)}
+                                        className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors">
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                    <ChevronRight className="w-5 h-5 text-zinc-400" />
+                                </div>
                             </CardContent>
                         </Card>
                     ))}
