@@ -449,34 +449,64 @@ ${summaryHtml}
                     </div>
 
                     {/* Bill Content */}
-                    <Card className="overflow-hidden" data-testid="bill-preview">
+                    <Card className="overflow-hidden border-2 border-emerald-200" data-testid="bill-preview">
                         <div ref={billRef}>
-                            <div className="bg-emerald-800 text-white p-4 sm:p-6 text-center">
-                                <h1 className="text-xl sm:text-2xl font-bold tracking-wide" style={{fontFamily: 'serif'}}>NIRBANI DAIRY</h1>
-                                <p className="text-emerald-200 text-xs mt-1">{t('Dairy Management Software', 'डेयरी प्रबंधन सॉफ्टवेयर')}</p>
-                                <div className="mt-2 inline-block px-4 py-1 bg-white/10 rounded-full text-xs">
-                                    {billData.type === 'farmer' ? t('FARMER BILL', 'किसान बिल') : t('CUSTOMER BILL', 'ग्राहक बिल')}
+                            {/* Compact Invoice Header */}
+                            <div className="bg-emerald-800 text-white px-4 py-3 sm:px-6 sm:py-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center text-lg font-black" style={{fontFamily: 'serif'}}>N</div>
+                                        <div>
+                                            <h1 className="text-lg sm:text-xl font-bold tracking-wider" style={{fontFamily: 'Georgia, serif'}}>NIRBANI DAIRY</h1>
+                                            <p className="text-emerald-300 text-[9px] tracking-wide">{t('Dairy Management Software', 'डेयरी प्रबंधन सॉफ्टवेयर')}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right text-[9px] text-emerald-200 leading-relaxed hidden sm:block">
+                                        <p>Ph: _______________</p>
+                                        <p>Address: _______________</p>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="p-4 sm:p-6 border-b bg-zinc-50">
-                                <div className="flex justify-between flex-wrap gap-2">
+
+                            {/* Bill Type Bar */}
+                            <div className="bg-emerald-700 text-white text-center py-1.5 text-[10px] font-bold tracking-[3px] uppercase">
+                                {billData.type === 'farmer' ? t('Farmer Bill', 'किसान बिल') : t('Customer Bill', 'ग्राहक बिल')}
+                            </div>
+
+                            {/* Info Row */}
+                            <div className="px-4 py-2.5 sm:px-6 bg-emerald-50/50 border-b border-emerald-100">
+                                <div className="flex flex-wrap justify-between gap-x-6 gap-y-1">
                                     <div>
-                                        <p className="text-xs text-zinc-500">{billData.type === 'farmer' ? t('Farmer', 'किसान') : t('Customer', 'ग्राहक')}</p>
-                                        <p className="text-base font-bold text-zinc-900">{billData.type === 'farmer' ? billData.farmer?.name : billData.customer?.name}</p>
-                                        <p className="text-xs text-zinc-500">{billData.type === 'farmer' ? billData.farmer?.phone : billData.customer?.phone}{billData.farmer?.village ? ` | ${billData.farmer.village}` : ''}</p>
+                                        <p className="text-[9px] text-zinc-400 uppercase tracking-wider">{billData.type === 'farmer' ? t('Farmer', 'किसान') : t('Customer', 'ग्राहक')}</p>
+                                        <p className="text-sm font-bold text-zinc-900">{billData.type === 'farmer' ? billData.farmer?.name : billData.customer?.name}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[9px] text-zinc-400 uppercase tracking-wider">{t('Phone', 'फ़ोन')}</p>
+                                        <p className="text-xs font-semibold text-zinc-700">{(billData.type === 'farmer' ? billData.farmer?.phone : billData.customer?.phone) || '-'}</p>
+                                    </div>
+                                    {billData.farmer?.village && (
+                                        <div>
+                                            <p className="text-[9px] text-zinc-400 uppercase tracking-wider">{t('Village', 'गांव')}</p>
+                                            <p className="text-xs font-semibold text-zinc-700">{billData.farmer.village}</p>
+                                        </div>
+                                    )}
+                                    <div className="text-right">
+                                        <p className="text-[9px] text-zinc-400 uppercase tracking-wider">{t('Period', 'अवधि')}</p>
+                                        <p className="text-sm font-bold text-emerald-700">{billData.period_label}</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-xs text-zinc-500">{t('Period', 'अवधि')}</p>
-                                        <p className="text-sm font-bold text-zinc-900">{billData.period_label}</p>
-                                        <p className="text-xs text-zinc-500">{billData.summary?.total_entries} {t('entries', 'प्रविष्टि')}</p>
+                                        <p className="text-[9px] text-zinc-400 uppercase tracking-wider">{t('Entries', 'प्रविष्टि')}</p>
+                                        <p className="text-xs font-semibold text-zinc-700">{billData.summary?.total_entries}</p>
                                     </div>
                                 </div>
                             </div>
-                            <div className="p-4 sm:p-6">
+
+                            {/* Table */}
+                            <div className="px-3 py-2 sm:px-5">
                                 {billData.type === 'farmer'
                                     ? <FarmerBillTable data={billData} t={t} onDelete={handleDeleteCollection} deleting={deleting} />
                                     : <CustomerBillTable data={billData} t={t} onDelete={handleDeleteSale} deleting={deleting} />}
-                                {/* Empty state with add prompt */}
+                                {/* Empty state */}
                                 {((billData.type === 'farmer' && !billData.collections?.length) || (billData.type === 'customer' && !billData.sales?.length)) && (
                                     <div className="text-center py-6 no-print">
                                         <p className="text-zinc-400 text-sm mb-3">{t('No records for this period', 'इस अवधि के लिए कोई रिकॉर्ड नहीं')}</p>
@@ -487,24 +517,53 @@ ${summaryHtml}
                                     </div>
                                 )}
                             </div>
-                            <div className="p-4 sm:p-6 bg-emerald-50 border-t-2 border-emerald-600">
+
+                            {/* Summary */}
+                            <div className="mx-3 sm:mx-5 mb-3 border-2 border-emerald-600 rounded-lg overflow-hidden">
                                 {billData.type === 'farmer' ? (
-                                    <div className="space-y-2">
-                                        <SummaryRow label={t('Total Milk Quantity', 'कुल दूध मात्रा')} value={`${billData.summary.total_quantity} L`} />
-                                        <SummaryRow label={t('Total Amount', 'कुल राशि')} value={formatCurrency(billData.summary.total_amount)} />
-                                        <SummaryRow label={t('Amount Paid', 'भुगतान किया')} value={formatCurrency(billData.summary.total_paid)} />
-                                        <div className="border-t-2 border-emerald-600 pt-2 mt-2">
-                                            <SummaryRow label={t('Balance Due', 'बकाया राशि')} value={formatCurrency(billData.summary.balance_due)} bold />
+                                    <>
+                                        <div className="flex justify-between px-3 py-1.5 text-xs border-b border-emerald-100">
+                                            <span className="text-zinc-600">{t('Total Milk Quantity', 'कुल दूध मात्रा')}</span>
+                                            <span className="font-semibold">{billData.summary.total_quantity} L</span>
                                         </div>
-                                    </div>
+                                        <div className="flex justify-between px-3 py-1.5 text-xs border-b border-emerald-100 bg-emerald-50/30">
+                                            <span className="text-zinc-600">{t('Total Amount', 'कुल राशि')}</span>
+                                            <span className="font-semibold">{formatCurrency(billData.summary.total_amount)}</span>
+                                        </div>
+                                        <div className="flex justify-between px-3 py-1.5 text-xs border-b border-emerald-100">
+                                            <span className="text-zinc-600">{t('Amount Paid', 'भुगतान किया')}</span>
+                                            <span className="font-semibold">{formatCurrency(billData.summary.total_paid)}</span>
+                                        </div>
+                                        <div className="flex justify-between px-3 py-2 text-sm bg-emerald-700 text-white font-bold">
+                                            <span>{t('Balance Due', 'बकाया राशि')}</span>
+                                            <span>{formatCurrency(billData.summary.balance_due)}</span>
+                                        </div>
+                                    </>
                                 ) : (
-                                    <div className="space-y-2">
-                                        <SummaryRow label={t('Total Entries', 'कुल प्रविष्टि')} value={billData.summary.total_entries} />
-                                        <div className="border-t-2 border-emerald-600 pt-2 mt-2">
-                                            <SummaryRow label={t('Total Amount', 'कुल राशि')} value={formatCurrency(billData.summary.total_amount)} bold />
+                                    <>
+                                        <div className="flex justify-between px-3 py-1.5 text-xs border-b border-emerald-100">
+                                            <span className="text-zinc-600">{t('Total Entries', 'कुल प्रविष्टि')}</span>
+                                            <span className="font-semibold">{billData.summary.total_entries}</span>
                                         </div>
-                                    </div>
+                                        <div className="flex justify-between px-3 py-2 text-sm bg-emerald-700 text-white font-bold">
+                                            <span>{t('Total Amount', 'कुल राशि')}</span>
+                                            <span>{formatCurrency(billData.summary.total_amount)}</span>
+                                        </div>
+                                    </>
                                 )}
+                            </div>
+
+                            {/* Signature Row */}
+                            <div className="px-5 pb-3 flex justify-between text-[9px] text-zinc-400">
+                                <div className="border-t border-zinc-300 pt-1 w-[35%] text-center">{t('Dairy Signature', 'डेयरी हस्ताक्षर')}</div>
+                                <div className="border-t border-zinc-300 pt-1 w-[35%] text-center">
+                                    {billData.type === 'farmer' ? t('Farmer Signature', 'किसान हस्ताक्षर') : t('Customer Signature', 'ग्राहक हस्ताक्षर')}
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="text-center text-[8px] text-zinc-300 border-t border-zinc-100 py-1.5 bg-zinc-50">
+                                Nirbani Dairy Management Software | Computer Generated Bill
                             </div>
                         </div>
                     </Card>
