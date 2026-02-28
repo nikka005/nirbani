@@ -173,7 +173,7 @@ const BillingPage = () => {
             }, { headers });
             toast.success(t('Entry added!', 'प्रविष्टि जोड़ी गई!'));
             setShowAddCollection(false);
-            setCollForm({ date: new Date().toISOString().split('T')[0], shift: new Date().getHours() < 12 ? 'morning' : 'evening', milk_type: 'cow', quantity: '', fat: '', snf: '', rate: '' });
+            setCollForm({ date: toLocalDateStr(new Date()), shift: new Date().getHours() < 12 ? 'morning' : 'evening', milk_type: 'cow', quantity: '', fat: '', snf: '', rate: '' });
             await generateBill();
         } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
         finally { setSubmitting(false); }
@@ -213,7 +213,7 @@ const BillingPage = () => {
                 toast.success(t('Sale added!', 'बिक्री जोड़ी गई!'));
             }
             setShowAddSale(false);
-            setSaleForm({ date: new Date().toISOString().split('T')[0], product: 'milk', quantity: '', rate: '', direct_amount: '', mode: 'direct', repeatDays: '1' });
+            setSaleForm({ date: toLocalDateStr(new Date()), product: 'milk', quantity: '', rate: '', direct_amount: '', mode: 'direct', repeatDays: '1' });
             await generateBill();
         } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
         finally { setSubmitting(false); }
@@ -275,7 +275,7 @@ const BillingPage = () => {
     const openAddCollection = () => {
         const farmer = farmers.find(f => f.id === selectedId);
         const rate = farmer?.cow_rate || farmer?.rate || '';
-        setCollForm(p => ({ ...p, rate: rate ? String(rate) : '', date: new Date().toISOString().split('T')[0] }));
+        setCollForm(p => ({ ...p, rate: rate ? String(rate) : '', date: toLocalDateStr(new Date()) }));
         setShowAddCollection(true);
     };
 
