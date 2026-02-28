@@ -134,6 +134,48 @@ const FarmersPage = () => {
         }
     };
 
+    const handleDeleteFarmer = async (e, farmerId) => {
+        e.stopPropagation();
+        if (!window.confirm(language === 'hi' ? 'किसान हटाएं?' : 'Delete this farmer?')) return;
+        try {
+            await farmerAPI.delete(farmerId);
+            setFarmers(prev => prev.filter(f => f.id !== farmerId));
+            toast.success(language === 'hi' ? 'किसान हटाया गया' : 'Farmer deleted');
+        } catch (error) { toast.error(error.response?.data?.detail || 'Error'); }
+    };
+
+    const openEditFarmer = (e, farmer) => {
+        e.stopPropagation();
+        setEditFarmer({
+            ...farmer,
+            fixed_rate: farmer.fixed_rate || '',
+            cow_rate: farmer.cow_rate || '',
+            buffalo_rate: farmer.buffalo_rate || '',
+        });
+        setShowEditDialog(true);
+    };
+
+    const handleUpdateFarmer = async (e) => {
+        e.preventDefault();
+        if (!editFarmer) return;
+        setSubmitting(true);
+        try {
+            const payload = {
+                name: editFarmer.name, phone: editFarmer.phone, village: editFarmer.village,
+                address: editFarmer.address, milk_type: editFarmer.milk_type,
+                fixed_rate: editFarmer.fixed_rate ? parseFloat(editFarmer.fixed_rate) : null,
+                cow_rate: editFarmer.cow_rate ? parseFloat(editFarmer.cow_rate) : null,
+                buffalo_rate: editFarmer.buffalo_rate ? parseFloat(editFarmer.buffalo_rate) : null,
+            };
+            await farmerAPI.update(editFarmer.id, payload);
+            setShowEditDialog(false);
+            setEditFarmer(null);
+            toast.success(language === 'hi' ? 'किसान अपडेट!' : 'Farmer updated!');
+            fetchFarmers();
+        } catch (error) { toast.error(error.response?.data?.detail || 'Error'); }
+        finally { setSubmitting(false); }
+    };
+
     const filteredFarmers = farmers.filter(f => 
         f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         f.phone.includes(searchTerm) ||
