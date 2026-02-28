@@ -86,6 +86,15 @@ const SalesPage = () => {
         finally { setLoading(false); }
     };
 
+    const handleDeleteSale = async (saleId) => {
+        if (!window.confirm(t('Delete this sale?', 'यह बिक्री हटाएं?'))) return;
+        try {
+            await axios.delete(`${BACKEND_URL}/api/sales/${saleId}`, { headers });
+            toast.success(t('Sale deleted', 'बिक्री हटाई गई'));
+            fetchData();
+        } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
+    };
+
     const handleAddCustomer = async (e) => {
         e.preventDefault();
         if (!customerForm.name) { toast.error(t('Name required', 'नाम आवश्यक')); return; }
