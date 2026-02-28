@@ -945,6 +945,43 @@ const SalesPage = () => {
                     )}
                 </DialogContent>
             </Dialog>
+
+            {/* Edit Sale Dialog */}
+            <Dialog open={showEditSale} onOpenChange={setShowEditSale}>
+                <DialogContent className="sm:max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2"><Pencil className="w-5 h-5 text-blue-600" />{t('Edit Sale', 'बिक्री संपादित करें')}</DialogTitle>
+                    </DialogHeader>
+                    {editSaleData && (
+                        <form onSubmit={handleUpdateSale} className="space-y-3">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">{t('Product', 'उत्पाद')}</Label>
+                                <Select value={editSaleData.product} onValueChange={(v) => setEditSaleData(p => ({...p, product: v}))}>
+                                    <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
+                                    <SelectContent>{productOptions.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs">{t('Quantity', 'मात्रा')}</Label>
+                                    <Input type="number" step="0.1" value={editSaleData.quantity} onChange={(e) => setEditSaleData(p => ({...p, quantity: e.target.value}))} className="h-12 text-lg" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs">{t('Rate', 'दर')}</Label>
+                                    <Input type="number" step="0.5" value={editSaleData.rate} onChange={(e) => setEditSaleData(p => ({...p, rate: e.target.value}))} className="h-12 text-lg" />
+                                </div>
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">{t('Amount', 'राशि')}</Label>
+                                <Input type="number" step="0.5" value={editSaleData.amount} onChange={(e) => setEditSaleData(p => ({...p, amount: e.target.value}))} className="h-12 text-lg font-bold text-center" />
+                            </div>
+                            <Button type="submit" data-testid="submit-edit-sale" className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-base" disabled={submitting}>
+                                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : t('Update Sale', 'बिक्री अपडेट करें')}
+                            </Button>
+                        </form>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
