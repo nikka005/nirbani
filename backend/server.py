@@ -967,6 +967,68 @@ async def delete_collection(collection_id: str, current_user: dict = Depends(get
     await db.milk_collections.delete_one({"id": collection_id})
     return {"message": "Collection deleted successfully"}
 
+@api_router.put("/collections/{collection_id}")
+async def update_collection(collection_id: str, updates: dict, current_user: dict = Depends(get_current_user)):
+    collection = await db.milk_collections.find_one({"id": collection_id}, {"_id": 0})
+    if not collection:
+        raise HTTPException(status_code=404, detail="Collection not found")
+    
+    old_qty = collection["quantity"]
+    old_amount = collection["amount"]
+    
+    allowed = {"date", "shift", "milk_type", "quantity", "fat", "snf", "rate"}
+    update_data = {k: v for k, v in updates.items() if k in allowed and v is not None}
+    
+    qty = float(update_data.get("quantity", collection["quantity"]))
+    rate = float(update_data.get("rate", collection["rate"]))
+    amount = round(qty * rate, 2)
+    update_data["amount"] = amount
+    update_data["quantity"] = qty
+    update_data["rate"] = rate
+    
+    await db.milk_collections.update_one({"id": collection_id}, {"$set": update_data})
+    
+    await db.farmers.update_one(
+        {"id": collection["farmer_id"]},
+        {"$inc": {"total_milk": qty - old_qty, "total_due": amount - old_amount, "balance": amount - old_amount}}
+    )
+    
+    updated = await db.milk_collections.find_one({"id": collection_id}, {"_id": 0})
+    return updated
+
+@api_router.put("/sales/{sale_id}")
+async def update_sale(sale_id: str, updates: dict, current_user: dict = Depends(get_current_user)):
+    sale = await db.sales.find_one({"id": sale_id}, {"_id": 0})
+    if not sale:
+        raise HTTPException(status_code=404, detail="Sale not found")
+    
+    old_amount = sale["amount"]
+    
+    allowed = {"date", "product", "quantity", "rate", "direct_amount"}
+    update_data = {k: v for k, v in updates.items() if k in allowed and v is not None}
+    
+    direct_amount = update_data.get("direct_amount")
+    if direct_amount and float(direct_amount) > 0:
+        amount = round(float(direct_amount), 2)
+        update_data["amount"] = amount
+    else:
+        qty = float(update_data.get("quantity", sale["quantity"]))
+        rate = float(update_data.get("rate", sale["rate"]))
+        amount = round(qty * rate, 2)
+        update_data["amount"] = amount
+        update_data["quantity"] = qty
+        update_data["rate"] = rate
+    
+    await db.sales.update_one({"id": sale_id}, {"$set": update_data})
+    
+    await db.customers.update_one(
+        {"id": sale["customer_id"]},
+        {"$inc": {"total_purchase": amount - old_amount, "balance": amount - old_amount}}
+    )
+    
+    updated = await db.sales.find_one({"id": sale_id}, {"_id": 0})
+    return updated
+
 # ==================== RATE CHART ROUTES ====================
 
 @api_router.post("/rate-charts", response_model=RateChartResponse)
