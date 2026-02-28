@@ -485,6 +485,60 @@ const FarmersPage = () => {
                     </form>
                 </DialogContent>
             </Dialog>
+
+            {/* Edit Farmer Dialog */}
+            <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+                <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="font-heading flex items-center gap-2">
+                            <Pencil className="w-5 h-5 text-blue-600" />
+                            {language === 'hi' ? 'किसान संपादित करें' : 'Edit Farmer'}
+                        </DialogTitle>
+                    </DialogHeader>
+                    {editFarmer && (
+                        <form onSubmit={handleUpdateFarmer} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>{language === 'hi' ? 'नाम' : 'Name'} *</Label>
+                                <Input value={editFarmer.name} onChange={(e) => setEditFarmer(p => ({...p, name: e.target.value}))} className="h-12" required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>{language === 'hi' ? 'फ़ोन' : 'Phone'} *</Label>
+                                <Input type="tel" value={editFarmer.phone} onChange={(e) => setEditFarmer(p => ({...p, phone: e.target.value}))} className="h-12" required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>{language === 'hi' ? 'गाँव' : 'Village'}</Label>
+                                <Input value={editFarmer.village || ''} onChange={(e) => setEditFarmer(p => ({...p, village: e.target.value}))} className="h-12" />
+                            </div>
+                            <div className="border-t pt-4">
+                                <Label className="text-sm font-semibold mb-3 block">{language === 'hi' ? 'दूध का प्रकार' : 'Milk Type'}</Label>
+                                <div className="grid grid-cols-3 gap-2 mb-4">
+                                    {MILK_TYPES.map(mt => (
+                                        <button key={mt.value} type="button" onClick={() => setEditFarmer(p => ({...p, milk_type: mt.value}))}
+                                            className={cn("py-2 rounded-xl border-2 text-sm font-semibold",
+                                                editFarmer.milk_type === mt.value ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-zinc-200 text-zinc-600")}>
+                                            {language === 'hi' ? mt.labelHi : mt.labelEn}
+                                        </button>
+                                    ))}
+                                </div>
+                                {editFarmer.milk_type === 'both' ? (
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-1"><Label className="text-xs">{language === 'hi' ? 'गाय दर' : 'Cow Rate'} (₹/L)</Label>
+                                            <Input type="number" step="0.5" value={editFarmer.cow_rate} onChange={(e) => setEditFarmer(p => ({...p, cow_rate: e.target.value}))} className="h-12" /></div>
+                                        <div className="space-y-1"><Label className="text-xs">{language === 'hi' ? 'भैंस दर' : 'Buffalo Rate'} (₹/L)</Label>
+                                            <Input type="number" step="0.5" value={editFarmer.buffalo_rate} onChange={(e) => setEditFarmer(p => ({...p, buffalo_rate: e.target.value}))} className="h-12" /></div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-1"><Label className="text-xs">{language === 'hi' ? 'निश्चित दर' : 'Fixed Rate'} (₹/L)</Label>
+                                        <Input type="number" step="0.5" value={editFarmer.fixed_rate} onChange={(e) => setEditFarmer(p => ({...p, fixed_rate: e.target.value}))} className="h-12" /></div>
+                                )}
+                            </div>
+                            <Button type="submit" data-testid="submit-edit-farmer" className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-base" disabled={submitting}>
+                                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : (language === 'hi' ? 'अपडेट करें' : 'Update Farmer')}
+                            </Button>
+                        </form>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
