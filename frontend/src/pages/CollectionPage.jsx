@@ -571,6 +571,42 @@ const CollectionPage = () => {
                     </form>
                 </DialogContent>
             </Dialog>
+
+            {/* Edit Collection Dialog */}
+            <Dialog open={showEditCollection} onOpenChange={setShowEditCollection}>
+                <DialogContent className="sm:max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2"><Pencil className="w-5 h-5 text-blue-600" />{t('Edit Collection', 'संग्रह संपादित करें')}</DialogTitle>
+                    </DialogHeader>
+                    {editCollData && (
+                        <form onSubmit={handleUpdateCollection} className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs">{t('Quantity (L)', 'मात्रा (L)')}</Label>
+                                    <Input type="number" step="0.1" value={editCollData.quantity} onChange={(e) => setEditCollData(p => ({...p, quantity: e.target.value}))} className="h-12 text-lg" data-testid="edit-coll-quantity" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs">{t('Rate (₹/L)', 'दर (₹/L)')}</Label>
+                                    <Input type="number" step="0.5" value={editCollData.rate} onChange={(e) => setEditCollData(p => ({...p, rate: e.target.value}))} className="h-12 text-lg" data-testid="edit-coll-rate" />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs">{t('Fat %', 'फैट %')}</Label>
+                                    <Input type="number" step="0.1" value={editCollData.fat} onChange={(e) => setEditCollData(p => ({...p, fat: e.target.value}))} className="h-10" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs">{t('SNF %', 'एसएनएफ %')}</Label>
+                                    <Input type="number" step="0.1" value={editCollData.snf} onChange={(e) => setEditCollData(p => ({...p, snf: e.target.value}))} className="h-10" />
+                                </div>
+                            </div>
+                            <Button type="submit" data-testid="submit-edit-collection" className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-base" disabled={submitting}>
+                                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : t('Update Entry', 'प्रविष्टि अपडेट करें')}
+                            </Button>
+                        </form>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
