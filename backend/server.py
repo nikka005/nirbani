@@ -1231,7 +1231,7 @@ async def create_sale(sale: SaleCreate, current_user: dict = Depends(get_current
     
     sale_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
-    date_str = now.strftime("%Y-%m-%d")
+    date_str = sale.date if sale.date else now.strftime("%Y-%m-%d")
     
     if sale.direct_amount and sale.direct_amount > 0:
         amount = round(sale.direct_amount, 2)
