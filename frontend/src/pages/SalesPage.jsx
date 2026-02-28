@@ -42,6 +42,8 @@ const SalesPage = () => {
     const [showAddWalkin, setShowAddWalkin] = useState(false);
     const [showUdharPayment, setShowUdharPayment] = useState(false);
     const [showUdharLedger, setShowUdharLedger] = useState(false);
+    const [showEditSale, setShowEditSale] = useState(false);
+    const [editSaleData, setEditSaleData] = useState(null);
     const [selectedWalkin, setSelectedWalkin] = useState(null);
     const [walkinDetail, setWalkinDetail] = useState(null);
     const [custSaleSearch, setCustSaleSearch] = useState('');
