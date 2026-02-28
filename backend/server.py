@@ -1320,6 +1320,18 @@ async def update_customer(
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
     update_data = {k: v for k, v in updates.model_dump().items() if v is not None}
+    
+    # Auto-capitalize name and check duplicates
+    if "name" in update_data:
+        update_data["name"] = update_data["name"].strip().title()
+        dup = await db.customers.find_one({"name": {"$regex": f"^{update_data['name']}$", "$options": "i"}, "id": {"$ne": customer_id}}, {"_id": 0})
+        if dup:
+            raise HTTPException(status_code=400, detail=f"Customer with name '{update_data['name']}' already exists")
+    if "phone" in update_data and update_data["phone"]:
+        dup = await db.customers.find_one({"phone": update_data["phone"].strip(), "id": {"$ne": customer_id}}, {"_id": 0})
+        if dup:
+            raise HTTPException(status_code=400, detail=f"Customer with phone '{update_data['phone']}' already exists")
+    
     if update_data:
         await db.customers.update_one({"id": customer_id}, {"$set": update_data})
     updated = await db.customers.find_one({"id": customer_id}, {"_id": 0})
