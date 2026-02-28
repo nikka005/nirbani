@@ -97,6 +97,30 @@ const SalesPage = () => {
         } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
     };
 
+    const openEditSale = (sale) => {
+        setEditSaleData({ ...sale });
+        setShowEditSale(true);
+    };
+
+    const handleUpdateSale = async (e) => {
+        e.preventDefault();
+        if (!editSaleData) return;
+        setSubmitting(true);
+        try {
+            await axios.put(`${BACKEND_URL}/api/sales/${editSaleData.id}`, {
+                product: editSaleData.product,
+                quantity: parseFloat(editSaleData.quantity || 0),
+                rate: parseFloat(editSaleData.rate || 0),
+                direct_amount: editSaleData.amount ? parseFloat(editSaleData.amount) : null,
+            }, { headers });
+            toast.success(t('Sale updated!', 'बिक्री अपडेट!'));
+            setShowEditSale(false);
+            setEditSaleData(null);
+            fetchData();
+        } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
+        finally { setSubmitting(false); }
+    };
+
     const handleAddCustomer = async (e) => {
         e.preventDefault();
         if (!customerForm.name) { toast.error(t('Name required', 'नाम आवश्यक')); return; }
