@@ -774,6 +774,18 @@ async def update_farmer(
         raise HTTPException(status_code=404, detail="Farmer not found")
     
     update_data = {k: v for k, v in updates.model_dump().items() if v is not None}
+    
+    # Auto-capitalize name and check duplicates
+    if "name" in update_data:
+        update_data["name"] = update_data["name"].strip().title()
+        dup = await db.farmers.find_one({"name": {"$regex": f"^{update_data['name']}$", "$options": "i"}, "id": {"$ne": farmer_id}}, {"_id": 0})
+        if dup:
+            raise HTTPException(status_code=400, detail=f"Farmer with name '{update_data['name']}' already exists")
+    if "phone" in update_data and update_data["phone"]:
+        dup = await db.farmers.find_one({"phone": update_data["phone"].strip(), "id": {"$ne": farmer_id}}, {"_id": 0})
+        if dup:
+            raise HTTPException(status_code=400, detail=f"Farmer with phone '{update_data['phone']}' already exists")
+    
     if update_data:
         await db.farmers.update_one({"id": farmer_id}, {"$set": update_data})
     
