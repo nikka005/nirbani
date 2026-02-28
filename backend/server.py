@@ -1307,6 +1307,14 @@ async def update_customer(
     updated = await db.customers.find_one({"id": customer_id}, {"_id": 0})
     return CustomerResponse(**updated)
 
+@api_router.delete("/customers/{customer_id}")
+async def delete_customer(customer_id: str, current_user: dict = Depends(get_current_user)):
+    customer = await db.customers.find_one({"id": customer_id}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    await db.customers.delete_one({"id": customer_id})
+    await db.sales.delete_many({"customer_id": customer_id})
+    return {"message": "Customer deleted successfully"}
 
 
 # ==================== SALES ROUTES ====================
