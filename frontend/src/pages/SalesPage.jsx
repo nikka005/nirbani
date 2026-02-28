@@ -1030,6 +1030,49 @@ const SalesPage = () => {
                     )}
                 </DialogContent>
             </Dialog>
+
+            {/* Edit Customer Dialog */}
+            <Dialog open={showEditCustomer} onOpenChange={setShowEditCustomer}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2"><Pencil className="w-5 h-5 text-blue-600" />{t('Edit Customer', 'ग्राहक संपादित करें')}</DialogTitle>
+                    </DialogHeader>
+                    {editCustomerData && (
+                        <form onSubmit={handleUpdateCustomer} className="space-y-3">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">{t('Name', 'नाम')} *</Label>
+                                <Input value={editCustomerData.name} onChange={(e) => setEditCustomerData(p => ({...p, name: e.target.value}))} className="h-12" required />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">{t('Phone', 'फ़ोन')}</Label>
+                                <Input type="tel" value={editCustomerData.phone || ''} onChange={(e) => setEditCustomerData(p => ({...p, phone: e.target.value}))} className="h-12" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">{t('Address', 'पता')}</Label>
+                                <Input value={editCustomerData.address || ''} onChange={(e) => setEditCustomerData(p => ({...p, address: e.target.value}))} className="h-12" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">{t('Default Rate', 'डिफ़ॉल्ट दर')} (₹/L)</Label>
+                                <Input type="number" step="0.5" value={editCustomerData.default_rate || ''} onChange={(e) => setEditCustomerData(p => ({...p, default_rate: e.target.value}))} className="h-12" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">{t('Type', 'प्रकार')}</Label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {['regular', 'wholesale'].map(ct => (
+                                        <button key={ct} type="button" onClick={() => setEditCustomerData(p => ({...p, customer_type: ct}))}
+                                            className={cn("py-2 rounded-lg border text-xs font-semibold", editCustomerData.customer_type === ct ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-zinc-200 text-zinc-500")}>
+                                            {ct === 'regular' ? t('Regular', 'रेगुलर') : t('Wholesale', 'होलसेल')}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <Button type="submit" data-testid="submit-edit-customer" className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-base" disabled={submitting}>
+                                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : t('Update Customer', 'ग्राहक अपडेट करें')}
+                            </Button>
+                        </form>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
