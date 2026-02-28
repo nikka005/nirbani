@@ -1440,6 +1440,70 @@ async def record_udhar_payment(payment: UdharPaymentCreate, current_user: dict =
     
     return doc
 
+
+# ==================== BILLING ROUTES ====================
+
+@api_router.get("/billing/farmer/{farmer_id}")
+async def get_farmer_billing(farmer_id: str, start_date: str, end_date: str, current_user: dict = Depends(get_current_user)):
+    farmer = await db.farmers.find_one({"id": farmer_id}, {"_id": 0})
+    if not farmer:
+        raise HTTPException(status_code=404, detail="Farmer not found")
+    
+    collections = await db.milk_collections.find(
+        {"farmer_id": farmer_id, "date": {"$gte": start_date, "$lte": end_date}},
+        {"_id": 0}
+    ).sort("date", 1).to_list(5000)
+    
+    payments = await db.payments.find(
+        {"farmer_id": farmer_id, "date": {"$gte": start_date, "$lte": end_date}},
+        {"_id": 0}
+    ).sort("date", 1).to_list(1000)
+    
+    total_quantity = sum(c.get("quantity", 0) for c in collections)
+    total_amount = sum(c.get("amount", 0) for c in collections)
+    total_paid = sum(p.get("amount", 0) for p in payments)
+    
+    return {
+        "farmer": farmer,
+        "collections": collections,
+        "payments": payments,
+        "summary": {
+            "total_quantity": round(total_quantity, 2),
+            "total_amount": round(total_amount, 2),
+            "total_paid": round(total_paid, 2),
+            "balance_due": round(total_amount - total_paid, 2),
+            "total_entries": len(collections),
+            "start_date": start_date,
+            "end_date": end_date
+        }
+    }
+
+@api_router.get("/billing/customer/{customer_id}")
+async def get_customer_billing(customer_id: str, start_date: str, end_date: str, current_user: dict = Depends(get_current_user)):
+    customer = await db.customers.find_one({"id": customer_id}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    sales = await db.sales.find(
+        {"customer_id": customer_id, "date": {"$gte": start_date, "$lte": end_date}, "is_shop_sale": {"$ne": True}},
+        {"_id": 0}
+    ).sort("date", 1).to_list(5000)
+    
+    total_quantity = sum(s.get("quantity", 0) for s in sales)
+    total_amount = sum(s.get("amount", 0) for s in sales)
+    
+    return {
+        "customer": customer,
+        "sales": sales,
+        "summary": {
+            "total_quantity": round(total_quantity, 2),
+            "total_amount": round(total_amount, 2),
+            "total_entries": len(sales),
+            "start_date": start_date,
+            "end_date": end_date
+        }
+    }
+
 # ==================== BULK ORDER ROUTES ====================
 
 @api_router.post("/bulk-orders")
