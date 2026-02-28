@@ -11,7 +11,7 @@ import {
 } from '../components/ui/dialog';
 import { 
     Milk, Sun, Moon, Plus, Search, Trash2, Loader2, Check, Users,
-    TrendingUp, Droplets, Wallet, Download
+    TrendingUp, Droplets, Wallet, Download, Pencil
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
