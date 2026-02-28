@@ -36,6 +36,14 @@ const BillingPage = () => {
     const t = (en, hi) => language === 'hi' ? hi : en;
     const billRef = useRef(null);
 
+    // Format date as YYYY-MM-DD in local timezone (avoids UTC shift bug for IST users)
+    const toLocalDateStr = (d) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    };
+
     const [activeTab, setActiveTab] = useState('farmer');
     const [farmers, setFarmers] = useState([]);
     const [customers, setCustomers] = useState([]);
