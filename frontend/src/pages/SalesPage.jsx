@@ -97,6 +97,45 @@ const SalesPage = () => {
         } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
     };
 
+    const handleDeleteCustomer = async (e, customerId) => {
+        e.stopPropagation();
+        if (!window.confirm(t('Delete this customer and all their sales?', 'इस ग्राहक और उनकी सभी बिक्री हटाएं?'))) return;
+        try {
+            await axios.delete(`${BACKEND_URL}/api/customers/${customerId}`, { headers });
+            toast.success(t('Customer deleted', 'ग्राहक हटाया गया'));
+            fetchData();
+        } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
+    };
+
+    const [showEditCustomer, setShowEditCustomer] = useState(false);
+    const [editCustomerData, setEditCustomerData] = useState(null);
+
+    const openEditCustomer = (e, customer) => {
+        e.stopPropagation();
+        setEditCustomerData({ ...customer });
+        setShowEditCustomer(true);
+    };
+
+    const handleUpdateCustomer = async (e) => {
+        e.preventDefault();
+        if (!editCustomerData) return;
+        setSubmitting(true);
+        try {
+            await axios.put(`${BACKEND_URL}/api/customers/${editCustomerData.id}`, {
+                name: editCustomerData.name,
+                phone: editCustomerData.phone,
+                address: editCustomerData.address,
+                customer_type: editCustomerData.customer_type,
+                default_rate: editCustomerData.default_rate ? parseFloat(editCustomerData.default_rate) : null,
+            }, { headers });
+            toast.success(t('Customer updated!', 'ग्राहक अपडेट!'));
+            setShowEditCustomer(false);
+            setEditCustomerData(null);
+            fetchData();
+        } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
+        finally { setSubmitting(false); }
+    };
+
     const openEditSale = (sale) => {
         setEditSaleData({ ...sale });
         setShowEditSale(true);
