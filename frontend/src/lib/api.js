@@ -58,6 +58,7 @@ export const collectionAPI = {
     create: (data) => api.post('/collections', data),
     getAll: (params) => api.get('/collections', { params }),
     getToday: (params) => api.get('/collections/today', { params }),
+    update: (id, data) => api.put(`/collections/${id}`, data),
     delete: (id) => api.delete(`/collections/${id}`),
 };
 
@@ -127,6 +128,8 @@ export const saleAPI = {
     shopSale: (data) => api.post('/sales/shop', data),
     getToday: () => api.get('/sales/today'),
     getAll: (params) => api.get('/sales', { params }),
+    update: (id, data) => api.put(`/sales/${id}`, data),
+    delete: (id) => api.delete(`/sales/${id}`),
 };
 
 export default api;
