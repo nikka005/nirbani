@@ -1289,6 +1289,21 @@ async def get_sales(
     sales = await db.sales.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
     return [SaleResponse(**s) for s in sales]
 
+@api_router.delete("/sales/{sale_id}")
+async def delete_sale(sale_id: str, current_user: dict = Depends(get_current_user)):
+    sale = await db.sales.find_one({"id": sale_id}, {"_id": 0})
+    if not sale:
+        raise HTTPException(status_code=404, detail="Sale not found")
+    
+    # Revert customer totals
+    await db.customers.update_one(
+        {"id": sale["customer_id"]},
+        {"$inc": {"total_purchase": -sale["amount"], "balance": -sale["amount"]}}
+    )
+    
+    await db.sales.delete_one({"id": sale_id})
+    return {"message": "Sale deleted successfully"}
+
 @api_router.get("/sales/today")
 async def get_today_sales(current_user: dict = Depends(get_current_user)):
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
