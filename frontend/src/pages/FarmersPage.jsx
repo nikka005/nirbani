@@ -47,18 +47,10 @@ const FarmersPage = () => {
     const [showAddDialog, setShowAddDialog] = useState(searchParams.get('add') === 'true');
 
     const [formData, setFormData] = useState({
-        name: '',
-        phone: '',
-        village: '',
-        address: '',
-        bank_account: '',
-        ifsc_code: '',
-        aadhar_number: '',
-        milk_type: 'cow',
-        fixed_rate: '',
-        cow_rate: '',
-        buffalo_rate: '',
+        name: '', phone: '', village: '', address: '', bank_account: '', ifsc_code: '', aadhar_number: '', milk_type: 'cow', fixed_rate: '', cow_rate: '', buffalo_rate: '',
     });
+    const [editFarmer, setEditFarmer] = useState(null);
+    const [showEditDialog, setShowEditDialog] = useState(false);
 
     const texts = {
         title: language === 'hi' ? 'किसान' : 'Farmers',
