@@ -31,7 +31,9 @@ const productOptions = [
     { value: 'other', label: { en: 'Other', hi: 'अन्य' } },
 ];
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL; = (d) => {
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
+const toLocalDateStr = (d) => {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
