@@ -861,17 +861,19 @@ async def create_collection(
     # Use provided date or default to today
     date_str = collection.date if collection.date else datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
-    # Duplicate entry protection - check if entry already exists for this farmer, date, and shift
+    # Duplicate entry protection - check if entry already exists for this farmer, date, shift AND milk_type
+    milk_type = collection.milk_type or farmer.get("milk_type", "cow")
     existing = await db.milk_collections.find_one({
         "farmer_id": collection.farmer_id,
         "date": date_str,
-        "shift": collection.shift
+        "shift": collection.shift,
+        "milk_type": milk_type
     }, {"_id": 0})
     
     if existing:
         raise HTTPException(
             status_code=400, 
-            detail=f"Entry already exists for this farmer in {collection.shift} shift on {date_str}. Delete existing entry first."
+            detail=f"Entry already exists for this farmer ({milk_type}) in {collection.shift} shift on {date_str}. Delete existing entry first."
         )
     
     # Calculate SNF if not provided
