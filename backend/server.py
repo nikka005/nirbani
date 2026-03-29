@@ -629,9 +629,13 @@ async def delete_user(user_id: str, current_user: dict = Depends(get_current_use
 
 @api_router.post("/admin/login", response_model=TokenResponse)
 async def admin_login(credentials: UserLogin):
-    user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
+    email = credentials.email.strip().lower()
+    user = await db.users.find_one({"email": email}, {"_id": 0})
     
-    if not user or not verify_password(credentials.password, user["password"]):
+    if not user:
+        user = await db.users.find_one({"email": {"$regex": f"^{email}$", "$options": "i"}}, {"_id": 0})
+    
+    if not user or not verify_password(credentials.password.strip(), user["password"]):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
     if user.get("role") != "admin":
@@ -656,9 +660,14 @@ async def admin_login(credentials: UserLogin):
 
 @api_router.post("/auth/login", response_model=TokenResponse)
 async def login(credentials: UserLogin):
-    user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
+    email = credentials.email.strip().lower()
+    user = await db.users.find_one({"email": email}, {"_id": 0})
     
-    if not user or not verify_password(credentials.password, user["password"]):
+    # Also try case-insensitive match
+    if not user:
+        user = await db.users.find_one({"email": {"$regex": f"^{email}$", "$options": "i"}}, {"_id": 0})
+    
+    if not user or not verify_password(credentials.password.strip(), user["password"]):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
     if not user.get("is_active", True):

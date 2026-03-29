@@ -25,10 +25,13 @@ const LoginPage = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            await login(loginData.email, loginData.password);
+            const email = loginData.email.trim().toLowerCase();
+            const password = loginData.password.trim();
+            await login(email, password);
             toast.success(t('Login successful!', 'लॉगिन सफल!'));
             navigate('/');
         } catch (error) {
+            console.error('Login error:', error?.response?.status, error?.response?.data);
             toast.error(t('Login failed', 'लॉगिन विफल'), { 
                 description: error.response?.data?.detail || t('Check your email and password', 'कृपया अपना ईमेल और पासवर्ड जांचें') 
             });
